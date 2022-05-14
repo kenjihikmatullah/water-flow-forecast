@@ -1,13 +1,6 @@
-import os
-import sys
 import shutil
 import subprocess
-
-input_file = 'foss_poly_1.inp'
-
-experiment_name = 'foss_varying_roughness'
-results_dir = experiment_name+'/'
-database_name = experiment_name+'.csv'
+import constant
 
 rough_positions = []
 for pos in range(1, 59):
@@ -123,14 +116,14 @@ def getdemands(nodefile):
 	return demands
 
 def changeroughness(pp, rp, r):
-    infilename = input_file
+    infilename = constant.INPUT_FILE
     fid = 1
     for p in rough_positions:
         outfilename = 'tmp'+str(fid)+'.inp'
         if pp == p:
             rpp = rp
             change(infilename, outfilename, 'PIPES', p, 5, rpp+' ')
-            finaloutputfile = results_dir+'tmp-PP-'+pp+'-r-'+str(r)+'.inp'
+            finaloutputfile = constant.OUTPUT_DIRECTORY+'tmp-PP-'+pp+'-r-'+str(r)+'.inp'
             shutil.move(outfilename, finaloutputfile)
             print(f'Created: {finaloutputfile}')
             break
@@ -140,8 +133,8 @@ def changeroughness(pp, rp, r):
     return finaloutputfile
 
 def changeroughness2(pp, rp, r):
-    infilename = input_file
-    finaloutputfile = results_dir+'tmp-PP-'+pp+'-r-'+str(r)+'.inp'
+    infilename = constant.INPUT_FILE
+    finaloutputfile = constant.OUTPUT_DIRECTORY+'tmp-PP-'+pp+'-r-'+str(r)+'.inp'
     change(infilename, finaloutputfile, 'PIPES', pp, 5, rp+' ')
     print(f'Created: {finaloutputfile}')
     return finaloutputfile
@@ -155,7 +148,7 @@ def getdata(finaloutputfile):
 
 if __name__ == "__main__":
     try:
-        database_file = open(results_dir + database_name, 'w')
+        database_file = open(constant.OUTPUT_DIRECTORY + constant.OUTPUT_FILE, 'w')
     except:
         print('Database file open error ')
 
@@ -185,7 +178,7 @@ if __name__ == "__main__":
             # print(f'Created: {finaloutputfile}')
 
             
-            subprocess.call(["java", "-cp", r"C:\Users\kenji\OneDrive - Institut Teknologi Sepuluh Nopember\Thesis\EPANET\water-flow-forecasting\AwareEpanetNoDeps.jar", "org.addition.epanet.EPATool",
+            subprocess.call(["java", "-cp", constant.EPANET_JAR_FILE, "org.addition.epanet.EPATool",
                     finaloutputfile])
             
             opparams = [pp, rp]
