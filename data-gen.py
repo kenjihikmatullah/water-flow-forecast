@@ -185,7 +185,7 @@ if __name__ == "__main__":
             # print(f'Created: {finaloutputfile}')
 
             
-            subprocess.call(["java", "-cp", "AwareEpanetNoDeps.jar", "org.addition.epanet.EPATool",
+            subprocess.call(["java", "-cp", r"C:\Users\kenji\OneDrive - Institut Teknologi Sepuluh Nopember\Thesis\EPANET\water-flow-forecasting\AwareEpanetNoDeps.jar", "org.addition.epanet.EPATool",
                     finaloutputfile])
             
             opparams = [pp, rp]
