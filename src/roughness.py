@@ -3,36 +3,34 @@ import shutil
 import subprocess
 from typing import TextIO
 
-import constant
 import input
-from constant import OUTPUT_ROUGHNESS_DIR, OUTPUT_ROUGHNESS_FILE
-
-rough_positions = []
-for pos in range(1, 59):
-    rough_positions.append(str(pos))
+from constant import INITIAL_INP_FILE, NUMBER_OF_PIPES, EPANET_JAR_FILE, CATEGORY_PIPE, \
+    INITIAL_ROUGHNESS, ROUGHNESS_INTERVAL_PER_VARIANT, NUMBER_OF_ROUGHNESS_VARIANTS, \
+    OUTPUT_ROUGHNESS_DIR, OUTPUT_ROUGHNESS_FILE
 
 
-def _prepare_dir():
+def _open_output_file() -> TextIO:
     if os.path.exists(OUTPUT_ROUGHNESS_DIR):
         shutil.rmtree(OUTPUT_ROUGHNESS_DIR)
 
     os.makedirs(OUTPUT_ROUGHNESS_DIR)
 
-
-def _open_file() -> TextIO:
-    _prepare_dir()
     return open(OUTPUT_ROUGHNESS_DIR + OUTPUT_ROUGHNESS_FILE, 'w')
 
 
-def _change_inner(inputfile, outputfile, category, idname, pos, val):
+def _generate_inp_file(pipe: int, roughness_variant: int, roughness: int):
+    target_inp_file = f'{OUTPUT_ROUGHNESS_DIR}tmp-PP-{pipe}-r-{roughness_variant}.inp'
+    idname = pipe
+    pos = 5
+
     try:
-        fileobj = open(inputfile, 'r')
+        fileobj = open(INITIAL_INP_FILE, 'r')
         lines = fileobj.readlines()
         fileobj.close()
     except:
         print('Input file open error')
     try:
-        fileout = open(outputfile, 'w')
+        fileout = open(target_inp_file, 'w')
     except:
         print('Output file open error ')
 
@@ -47,40 +45,43 @@ def _change_inner(inputfile, outputfile, category, idname, pos, val):
                 incategory = False
             else:
                 if ((ss[0] == idname) or (idname == '*' and ss[0][0] != ';')):
-                    ss[pos] = val
+                    ss[pos] = roughness
                     sep = "    "
                     lines[i] = sep.join(ss)
 
-        if (ss[0].find(category) > -1):
+        if (ss[0].find(CATEGORY_PIPE) > -1):
             incategory = True
         fileout.write(lines[i])
 
     fileout.close()
-
-
-def _change(pp, rp, r):
-    infilename = constant.INPUT_FILE
-    finaloutputfile = constant.OUTPUT_ROUGHNESS_DIR + 'tmp-PP-' + pp + '-r-' + str(r) + '.inp'
-    _change_inner(infilename, finaloutputfile, 'PIPES', pp, 5, rp + ' ')
-    print(f'Created: {finaloutputfile}')
-    return finaloutputfile
+    print(f'Created: {target_inp_file}')
+    return target_inp_file
 
 
 def simulate():
-    database_file = _open_file()
+    output_file = _open_output_file()
 
-    for r in range(0, constant.STEP_COUNT + 1):
-        for pp in rough_positions:
-            rp = str(constant.INITIAL_ROUGHNESS + constant.STEP * r)
-            finaloutputfile = _change(pp, rp, r)
+    # Simulate all roughness variants on each pipe
+    for pipe in range(1, NUMBER_OF_PIPES + 1):
+        for roughness_variant in range(0, NUMBER_OF_ROUGHNESS_VARIANTS):
+            # Count roughness
+            roughness = INITIAL_ROUGHNESS + ROUGHNESS_INTERVAL_PER_VARIANT * roughness_variant
 
-            subprocess.call(["java", "-cp", constant.EPANET_JAR_FILE, "org.addition.epanet.EPATool",
-                             finaloutputfile])
+            # Generate inp file
+            inp_file = _generate_inp_file(
+                pipe=pipe,
+                roughness_variant=roughness_variant,
+                roughness=roughness
+            )
 
-            opparams = [pp, rp]
+            # Run simulation
+            subprocess.call(["java", "-cp", EPANET_JAR_FILE, "org.addition.epanet.EPATool",
+                             inp_file])
+
+            opparams = [str(pipe), str(roughness)]
             sep = ","
-            csv_record = sep.join(opparams + input.getdata(finaloutputfile))
-            database_file.write(csv_record + '\n')
+            csv_record = sep.join(opparams + input.getdata(inp_file))
+            output_file.write(csv_record + '\n')
 
-    database_file.close()
+    output_file.close()
     print('Finished')
