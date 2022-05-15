@@ -1,17 +1,8 @@
 import os
-import shutil
-from typing import TextIO
 
-from constant import OUTPUT_DIRECTORY, OUTPUT_FILE
+from constant import OUTPUT_DIR
 
 
-def _prepare_dir():
-    if os.path.exists(OUTPUT_DIRECTORY):
-        shutil.rmtree(OUTPUT_DIRECTORY)
-
-    os.makedirs(OUTPUT_DIRECTORY)
-
-
-def open_file() -> TextIO:
-    _prepare_dir()
-    return open(OUTPUT_DIRECTORY + OUTPUT_FILE, 'w')
+def prepare_dir():
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
