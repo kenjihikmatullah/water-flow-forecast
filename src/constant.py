@@ -1,5 +1,5 @@
 INITIAL_INP_FILE = 'input/its_water_distribution.inp'
-NUMBER_OF_JUNCTIONS = 36  # TODO: Dynamically extract from the initial inp file
+NUMBER_OF_JUNCTIONS = 37  # TODO: Dynamically extract from the initial inp file
 NUMBER_OF_PIPES = 58  # TODO: Dynamically extract from the initial inp file
 
 EPANET_JAR_FILE = r"AwareEpanetNoDeps.jar"
