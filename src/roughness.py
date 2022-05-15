@@ -3,10 +3,13 @@ import shutil
 import subprocess
 from typing import TextIO
 
+import simulation_input
 from constant import INITIAL_INP_FILE, NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_PIPE, \
     INITIAL_ROUGHNESS, ROUGHNESS_INTERVAL_PER_VARIANT, NUMBER_OF_ROUGHNESS_VARIANTS, \
     OUTPUT_ROUGHNESS_DIR, OUTPUT_ROUGHNESS_FILE
-from simulation import get_flows, get_pressures, get_heads, get_demands
+from simulation_output import get_flows, get_pressures, get_heads, get_demands
+
+INP_PIPE_ROUGHNESS_COLUMN_INDEX = 5
 
 
 def _open_output_file() -> TextIO:
@@ -14,6 +17,7 @@ def _open_output_file() -> TextIO:
         shutil.rmtree(OUTPUT_ROUGHNESS_DIR)
 
     os.makedirs(OUTPUT_ROUGHNESS_DIR)
+    os.makedirs(OUTPUT_ROUGHNESS_DIR + 'temp/')
 
     return open(OUTPUT_ROUGHNESS_DIR + OUTPUT_ROUGHNESS_FILE, 'w')
 
@@ -36,44 +40,14 @@ def _write_header(output_file):
     output_file.write(",".join(header) + '\n')
 
 
-def _generate_inp_file(pipe: int, roughness_variant: int, roughness: int):
-    target_inp_file = f'{OUTPUT_ROUGHNESS_DIR}tmp-PP-{pipe}-r-{roughness_variant}.inp'
-    idname = pipe
-    pos = 5
-
-    try:
-        fileobj = open(INITIAL_INP_FILE, 'r')
-        lines = fileobj.readlines()
-        fileobj.close()
-    except:
-        print('Input file open error')
-    try:
-        fileout = open(target_inp_file, 'w')
-    except:
-        print('Output file open error ')
-
-    incategory = False
-    nl = len(lines)
-    for i in range(0, nl):
-        sss = lines[i].split(' ')
-        ss = list(filter(lambda x: x != '', sss))
-
-        if (incategory):
-            if (len(ss) == 1):
-                incategory = False
-            else:
-                if ((ss[0] == idname) or (idname == '*' and ss[0][0] != ';')):
-                    ss[pos] = roughness
-                    sep = "    "
-                    lines[i] = sep.join(ss)
-
-        if (ss[0].find(CATEGORY_PIPE) > -1):
-            incategory = True
-        fileout.write(lines[i])
-
-    fileout.close()
-    print(f'Created: {target_inp_file}')
-    return target_inp_file
+def _generate_inp_file(pipe: int, roughness: int):
+    return simulation_input.generate_custom_inp_file(
+        target_file_path=f'{OUTPUT_ROUGHNESS_DIR}temp/P{pipe}-R{roughness}.inp',
+        customized_category=CATEGORY_PIPE,
+        customized_component_id=str(pipe),
+        customized_column_index=INP_PIPE_ROUGHNESS_COLUMN_INDEX,
+        custom_value=str(roughness)
+    )
 
 
 def simulate():
@@ -91,7 +65,6 @@ def simulate():
                 # Generate inp file
                 inp_file = _generate_inp_file(
                     pipe=pipe,
-                    roughness_variant=roughness_variant,
                     roughness=roughness
                 )
 

@@ -9,7 +9,6 @@ NODES_OUT_PRESSURE_COLUMN_INDEX = 4
 NODES_OUT_HEAD_COLUMN_INDEX = 5
 NODES_OUT_DEMAND_COLUMN_INDEX = 6
 
-
 def _extract_results(inp_file: str, extension: str, column_index: int) -> list[str]:
     results = []
 
