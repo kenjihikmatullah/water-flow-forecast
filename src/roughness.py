@@ -3,10 +3,10 @@ import shutil
 import subprocess
 from typing import TextIO
 
-import input
-from constant import INITIAL_INP_FILE, NUMBER_OF_PIPES, EPANET_JAR_FILE, CATEGORY_PIPE, \
+from constant import INITIAL_INP_FILE, NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_PIPE, \
     INITIAL_ROUGHNESS, ROUGHNESS_INTERVAL_PER_VARIANT, NUMBER_OF_ROUGHNESS_VARIANTS, \
     OUTPUT_ROUGHNESS_DIR, OUTPUT_ROUGHNESS_FILE
+from simulation import get_flows, get_pressures, get_heads, get_demands
 
 
 def _open_output_file() -> TextIO:
@@ -16,6 +16,24 @@ def _open_output_file() -> TextIO:
     os.makedirs(OUTPUT_ROUGHNESS_DIR)
 
     return open(OUTPUT_ROUGHNESS_DIR + OUTPUT_ROUGHNESS_FILE, 'w')
+
+
+def _write_header(output_file):
+    header: list[str] = ['Adjusted Pipe', 'Roughness']
+
+    for pipe in range(1, NUMBER_OF_PIPES + 1):
+        header.append(f'P{pipe} Flow (LPS)')
+
+    for junction in range(1, NUMBER_OF_JUNCTIONS + 1):
+        header.append(f'J{junction} Pressure (m)')
+
+    for junction in range(1, NUMBER_OF_JUNCTIONS + 1):
+        header.append(f'J{junction} Head (m)')
+
+    for junction in range(1, NUMBER_OF_JUNCTIONS + 1):
+        header.append(f'J{junction} Demand (LPS)')
+
+    output_file.write(",".join(header) + '\n')
 
 
 def _generate_inp_file(pipe: int, roughness_variant: int, roughness: int):
@@ -61,27 +79,38 @@ def _generate_inp_file(pipe: int, roughness_variant: int, roughness: int):
 def simulate():
     output_file = _open_output_file()
 
-    # Simulate all roughness variants on each pipe
-    for pipe in range(1, NUMBER_OF_PIPES + 1):
-        for roughness_variant in range(0, NUMBER_OF_ROUGHNESS_VARIANTS):
-            # Count roughness
-            roughness = INITIAL_ROUGHNESS + ROUGHNESS_INTERVAL_PER_VARIANT * roughness_variant
+    try:
+        _write_header(output_file)
 
-            # Generate inp file
-            inp_file = _generate_inp_file(
-                pipe=pipe,
-                roughness_variant=roughness_variant,
-                roughness=roughness
-            )
+        # Simulate all roughness variants on each pipe
+        for pipe in range(1, NUMBER_OF_PIPES + 1):
+            for roughness_variant in range(0, NUMBER_OF_ROUGHNESS_VARIANTS + 1):
+                # Count roughness
+                roughness = INITIAL_ROUGHNESS + ROUGHNESS_INTERVAL_PER_VARIANT * roughness_variant
 
-            # Run simulation
-            subprocess.call(["java", "-cp", EPANET_JAR_FILE, "org.addition.epanet.EPATool",
-                             inp_file])
+                # Generate inp file
+                inp_file = _generate_inp_file(
+                    pipe=pipe,
+                    roughness_variant=roughness_variant,
+                    roughness=roughness
+                )
 
-            opparams = [str(pipe), str(roughness)]
-            sep = ","
-            csv_record = sep.join(opparams + input.getdata(inp_file))
-            output_file.write(csv_record + '\n')
+                # Run simulation
+                subprocess.call(["java", "-cp", EPANET_JAR_FILE, "org.addition.epanet.EPATool",
+                                 inp_file])
 
-    output_file.close()
-    print('Finished')
+                # Write down the result
+                csv_record = ",".join([
+                    str(pipe),
+                    str(roughness),
+                    *get_flows(inp_file),
+                    *get_pressures(inp_file),
+                    *get_heads(inp_file),
+                    *get_demands(inp_file)
+                ])
+                output_file.write(csv_record + '\n')
+
+        print('Finished')
+
+    finally:
+        output_file.close()
