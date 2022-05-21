@@ -4,26 +4,26 @@ import subprocess
 from typing import TextIO
 
 import simulation_input
-from constant import NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_PIPES, \
-    INITIAL_ROUGHNESS, ROUGHNESS_INTERVAL_PER_VARIANT, NUMBER_OF_ROUGHNESS_VARIANTS, \
-    OUTPUT_ROUGHNESS_DIR, OUTPUT_ROUGHNESS_FILE
+from constant import NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_EMITTERS, \
+    INITIAL_EMIT, EMIT_INTERVAL_PER_VARIANT, NUMBER_OF_EMIT_VARIANTS, \
+    OUTPUT_EMIT_DIR, OUTPUT_EMIT_FILE
 from simulation_output import get_flows, get_pressures, get_heads, get_demands
 
-INP_PIPE_ROUGHNESS_COLUMN_INDEX = 5
+INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
 
 
 def _open_output_file() -> TextIO:
-    if os.path.exists(OUTPUT_ROUGHNESS_DIR):
-        shutil.rmtree(OUTPUT_ROUGHNESS_DIR)
+    if os.path.exists(OUTPUT_EMIT_DIR):
+        shutil.rmtree(OUTPUT_EMIT_DIR)
 
-    os.makedirs(OUTPUT_ROUGHNESS_DIR)
-    os.makedirs(OUTPUT_ROUGHNESS_DIR + 'temp/')
+    os.makedirs(OUTPUT_EMIT_DIR)
+    os.makedirs(OUTPUT_EMIT_DIR + 'temp/')
 
-    return open(OUTPUT_ROUGHNESS_DIR + OUTPUT_ROUGHNESS_FILE, 'w')
+    return open(OUTPUT_EMIT_DIR + OUTPUT_EMIT_FILE, 'w')
 
 
 def _write_header(output_file):
-    header: list[str] = ['Adjusted Pipe', 'Roughness']
+    header: list[str] = ['Adjusted Junction', 'Emitter Coeff.']
 
     for pipe in range(1, NUMBER_OF_PIPES + 1):
         header.append(f'P{pipe} Flow (LPS)')
@@ -40,13 +40,13 @@ def _write_header(output_file):
     output_file.write(",".join(header) + '\n')
 
 
-def _generate_inp_file(pipe: int, roughness: int):
+def _generate_inp_file(junction_id: int, emit: int):
     return simulation_input.generate_custom_inp_file(
-        target_file_path=f'{OUTPUT_ROUGHNESS_DIR}temp/P{pipe}-R{roughness}.inp',
-        customized_category=CATEGORY_PIPES,
-        customized_component_id=str(pipe),
-        customized_column_index=INP_PIPE_ROUGHNESS_COLUMN_INDEX,
-        custom_value=str(roughness)
+        target_file_path=f'{OUTPUT_EMIT_DIR}temp/J{junction_id}-ec{emit}.inp',
+        customized_category=CATEGORY_EMITTERS,
+        customized_component_id=str(junction_id),
+        customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
+        custom_value=str(emit)
     )
 
 
@@ -56,16 +56,16 @@ def simulate():
     try:
         _write_header(output_file)
 
-        # Simulate all roughness variants on each pipe
-        for pipe in range(1, NUMBER_OF_PIPES + 1):
-            for roughness_variant in range(0, NUMBER_OF_ROUGHNESS_VARIANTS + 1):
-                # Count roughness
-                roughness = INITIAL_ROUGHNESS + ROUGHNESS_INTERVAL_PER_VARIANT * roughness_variant
+        # Simulate all emitter coefficient variants on each pipe
+        for junction_id in range(1, NUMBER_OF_JUNCTIONS + 1):
+            for emit_variant in range(0, NUMBER_OF_EMIT_VARIANTS + 1):
+                # Count emitter coefficient
+                emit = INITIAL_EMIT + EMIT_INTERVAL_PER_VARIANT * emit_variant
 
                 # Generate inp file
                 inp_file = _generate_inp_file(
-                    pipe=pipe,
-                    roughness=roughness
+                    junction_id=junction_id,
+                    emit=emit
                 )
 
                 # Run simulation
@@ -74,8 +74,8 @@ def simulate():
 
                 # Write down the result
                 csv_record = ",".join([
-                    str(pipe),
-                    str(roughness),
+                    str(junction_id),
+                    str(emit),
                     *get_flows(inp_file),
                     *get_pressures(inp_file),
                     *get_heads(inp_file),
