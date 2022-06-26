@@ -9,6 +9,24 @@ NODES_OUT_PRESSURE_COLUMN_INDEX = 4
 NODES_OUT_HEAD_COLUMN_INDEX = 5
 NODES_OUT_DEMAND_COLUMN_INDEX = 6
 
+def _extract_result(inp_file: str, extension: str, column_index: int, component_id: int) -> str:
+    try:
+        result_file = open(f'{inp_file}{extension}', 'r')
+        lines = result_file.readlines()
+
+    except OSError as e:
+        raise OSError(e, f'Failed to open {inp_file}{extension}')
+
+    finally:
+        result_file.close()
+
+    for i in range(0, len(lines) - NUMBER_OF_HEADER_ROWS):
+        line = lines[i + NUMBER_OF_HEADER_ROWS].split('\t')
+
+        if line[0] == str(component_id):
+            return line[column_index]
+
+
 def _extract_results(inp_file: str, extension: str, column_index: int) -> list[str]:
     results = []
 
@@ -24,7 +42,11 @@ def _extract_results(inp_file: str, extension: str, column_index: int) -> list[s
 
     for i in range(0, len(lines) - NUMBER_OF_HEADER_ROWS):
         line = lines[i + NUMBER_OF_HEADER_ROWS].split('\t')
-        results.append(line[column_index])
+
+        if extension == NODES_OUT_EXTENSION and line[0] == '71':
+            continue
+
+        results.append(line[column_index].replace('\n', ''))
 
     return results
 
@@ -57,5 +79,13 @@ def get_demands(inp_file: str):
     return _extract_results(
         inp_file=inp_file,
         extension=NODES_OUT_EXTENSION,
-        column_index=NODES_OUT_PRESSURE_COLUMN_INDEX
+        column_index=NODES_OUT_DEMAND_COLUMN_INDEX
+    )
+
+def get_demand(inp_file: str, component_id: int):
+    return _extract_result(
+        inp_file=inp_file,
+        extension=NODES_OUT_EXTENSION,
+        column_index=NODES_OUT_DEMAND_COLUMN_INDEX,
+        component_id=component_id
     )
