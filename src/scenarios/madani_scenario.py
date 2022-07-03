@@ -21,7 +21,7 @@ class MadaniScenario(Scenario):
 
     output_file: TextIO
 
-    def _open_output_file(self):
+    def __open_output_file(self):
         if os.path.exists(OUTPUT_EMIT_DIR):
             shutil.rmtree(OUTPUT_EMIT_DIR)
 
@@ -31,7 +31,7 @@ class MadaniScenario(Scenario):
 
         self.output_file = open(OUTPUT_EMIT_DIR + OUTPUT_EMIT_FILE, 'w')
 
-    def _write_header(self):
+    def __write_header(self):
         header: list[str] = ['Adjusted Junction', 'Emitter Coeff.']
 
         for pipe in range(1, NUMBER_OF_PIPES + 1):
@@ -50,7 +50,8 @@ class MadaniScenario(Scenario):
 
         self.output_file.write(",".join(header) + '\n')
 
-    def generate_inp_file(junction_id: int, emit: int):
+    @staticmethod
+    def __generate_inp_file(junction_id: int, emit: int):
         return inp_util.generate_custom_inp_file(
             target_file_path=f'{OUTPUT_EMIT_DIR}temp/J{junction_id}-ec{emit}.inp',
             customized_category=CATEGORY_EMITTERS,
@@ -59,7 +60,7 @@ class MadaniScenario(Scenario):
             custom_value=str(emit)
         )
 
-    def write_row(self, inp_file: str, adjusted_junction_label: str, emit_label: str):
+    def __write_row(self, inp_file: str, adjusted_junction_label: str, emit_label: str):
         # Simulate
         subprocess.call(["java", "-cp", EPANET_JAR_FILE, "org.addition.epanet.EPATool",
                          inp_file])
@@ -76,27 +77,27 @@ class MadaniScenario(Scenario):
         self.output_file.write(csv_record + '\n')
 
     def _on_arrange(self):
-        self._open_output_file()
-        self._write_header()
-        self.write_row(constant.INITIAL_INP_FILE, '-', '-')
+        self.__open_output_file()
+        self.__write_header()
+        self.__write_row(constant.INITIAL_INP_FILE, '-', '-')
 
     def _on_simulate(self):
-            # Simulate all emitter coefficient variants on each pipe
-            for junction_id in JUNCTION_IDS:
-                # Get proper emit
-                emit = emit_util.get_proper_emit(
-                    adjusted_junction_id=junction_id,
-                    expected_actual_demand=0.5
-                )
+        # Simulate all emitter coefficient variants on each pipe
+        for junction_id in JUNCTION_IDS:
+            # Get proper emit
+            emit = emit_util.get_proper_emit(
+                adjusted_junction_id=junction_id,
+                expected_actual_demand=0.5
+            )
 
-                # Set up simulation
-                inp_file = self.generate_inp_file(
-                    junction_id=junction_id,
-                    emit=emit
-                )
+            # Set up simulation
+            inp_file = MadaniScenario.__generate_inp_file(
+                junction_id=junction_id,
+                emit=emit
+            )
 
-                # Write row
-                self.write_row(inp_file, str(junction_id), str(emit))
+            # Write row
+            self.__write_row(inp_file, str(junction_id), str(emit))
 
     def _on_clean_up(self):
         self.output_file.close()
