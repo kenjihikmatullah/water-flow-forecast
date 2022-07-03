@@ -1,5 +1,7 @@
 import os
-from utils import emit_util, output
+
+from scenarios.madani_scenario import MadaniScenario
+from utils import output
 from pathlib import Path
 
 
@@ -16,8 +18,5 @@ if __name__ == "__main__":
     setup()
     output.prepare_dir()
 
-    # roughness.simulate()
+    MadaniScenario().run()
 
-    # emit.simulate()
-
-    emit_util.get_proper_emit(1, 0.5)
