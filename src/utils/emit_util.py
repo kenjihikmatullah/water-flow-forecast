@@ -1,11 +1,12 @@
 from utils import inp_util, out_util
-from properties.constant import EPANET_JAR_FILE, CATEGORY_EMITTERS, OUTPUT_EMIT_DIR
+from simulators.epanet_simulator import EpanetSimulator
 import subprocess
 
 INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
 
 
-def get_proper_emit(initial_inp_file: str, adjusted_junction_id: int, expected_actual_demand: float, base_demand: int = 0):
+def get_proper_emit(initial_inp_file: str, output_dir: str, adjusted_junction_id: int,
+                    expected_actual_demand: float, base_demand: int = 0):
     """
     get proper emit to achieve expected actual demand
     on adjusted junction
@@ -23,15 +24,15 @@ def get_proper_emit(initial_inp_file: str, adjusted_junction_id: int, expected_a
         # Set up simulation
         inp_file = inp_util.generate_custom_inp_file(
             initial_inp_file=initial_inp_file,
-            target_file_path=f'{OUTPUT_EMIT_DIR}temp-hill-climbing/j-index-{adjusted_junction_id}-ec{emit}.inp',
-            customized_category=CATEGORY_EMITTERS,
+            target_file_path=f'{output_dir}temp-hill-climbing/j-index-{adjusted_junction_id}-ec{emit}.inp',
+            customized_category=EpanetSimulator.CATEGORY_EMITTERS,
             customized_component_id=str(adjusted_junction_id),
             customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
             custom_value=str(emit)
         )
 
         # Simulate
-        subprocess.call(["java", "-cp", EPANET_JAR_FILE, "org.addition.epanet.EPATool",
+        subprocess.call(["java", "-cp", EpanetSimulator.JAR_FILE, "org.addition.epanet.EPATool",
                          inp_file])
 
         # Check whether desired actual demand is achieved
