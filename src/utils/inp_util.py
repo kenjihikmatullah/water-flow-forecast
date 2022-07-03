@@ -1,6 +1,3 @@
-from properties.constant import INITIAL_INP_FILE
-
-
 def change_property_value(lines: list[str], category: str, component_id: str, column_index: int, new_value: str):
     in_category = False
 
@@ -23,9 +20,9 @@ def change_property_value(lines: list[str], category: str, component_id: str, co
             in_category = True
 
 
-def generate_custom_inp_file(target_file_path: str, customized_category: str, customized_component_id: str,
+def generate_custom_inp_file(initial_inp_file, target_file_path: str, customized_category: str, customized_component_id: str,
                              customized_column_index: int, custom_value: str):
-    initial_inp_file = open(INITIAL_INP_FILE, 'r')
+    initial_inp_file = open(initial_inp_file, 'r')
     target_inp_file = open(target_file_path, 'w')
 
     try:

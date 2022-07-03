@@ -5,7 +5,7 @@ import subprocess
 INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
 
 
-def get_proper_emit(adjusted_junction_id: int, expected_actual_demand: float, base_demand: int = 0):
+def get_proper_emit(initial_inp_file: str, adjusted_junction_id: int, expected_actual_demand: float, base_demand: int = 0):
     """
     get proper emit to achieve expected actual demand
     on adjusted junction
@@ -22,6 +22,7 @@ def get_proper_emit(adjusted_junction_id: int, expected_actual_demand: float, ba
 
         # Set up simulation
         inp_file = inp_util.generate_custom_inp_file(
+            initial_inp_file=initial_inp_file,
             target_file_path=f'{OUTPUT_EMIT_DIR}temp-hill-climbing/j-index-{adjusted_junction_id}-ec{emit}.inp',
             customized_category=CATEGORY_EMITTERS,
             customized_component_id=str(adjusted_junction_id),

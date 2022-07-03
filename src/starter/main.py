@@ -1,8 +1,10 @@
 import os
 
+from models.scenario import Scenario
 from scenarios.madani_scenario import MadaniScenario
 from utils import output
 from pathlib import Path
+from properties.scenario_data import its_madani_scenario_data
 
 
 def setup():
@@ -18,5 +20,10 @@ if __name__ == "__main__":
     setup()
     output.prepare_dir()
 
-    MadaniScenario().run()
+    scenarios: list[Scenario] = [
+        MadaniScenario(data=its_madani_scenario_data.get_data())
+    ]
+
+    for scenario in scenarios:
+        scenario.run()
 
