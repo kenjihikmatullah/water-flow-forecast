@@ -1,6 +1,5 @@
-import simulation_input
-import simulation_output
-from constant import EPANET_JAR_FILE, CATEGORY_EMITTERS, OUTPUT_EMIT_DIR
+from utils import inp_util, out_util
+from properties.constant import EPANET_JAR_FILE, CATEGORY_EMITTERS, OUTPUT_EMIT_DIR
 import subprocess
 
 INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
@@ -22,7 +21,7 @@ def get_proper_emit(adjusted_junction_id: int, expected_actual_demand: float, ba
         emit += 0.01
 
         # Set up simulation
-        inp_file = simulation_input.generate_custom_inp_file(
+        inp_file = inp_util.generate_custom_inp_file(
             target_file_path=f'{OUTPUT_EMIT_DIR}temp-hill-climbing/j-index-{adjusted_junction_id}-ec{emit}.inp',
             customized_category=CATEGORY_EMITTERS,
             customized_component_id=str(adjusted_junction_id),
@@ -35,7 +34,7 @@ def get_proper_emit(adjusted_junction_id: int, expected_actual_demand: float, ba
                          inp_file])
 
         # Check whether desired actual demand is achieved
-        actual_demand_str = simulation_output.get_demand(
+        actual_demand_str = out_util.get_demand(
             inp_file=inp_file,
             component_id=adjusted_junction_id
         )

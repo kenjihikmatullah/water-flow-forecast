@@ -1,4 +1,4 @@
-from constant import INITIAL_INP_FILE
+from properties.constant import INITIAL_INP_FILE
 
 
 def change_property_value(lines: list[str], category: str, component_id: str, column_index: int, new_value: str):

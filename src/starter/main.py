@@ -1,9 +1,7 @@
-import output
-import roughness
-import emit
 import os
-import emit_util
+from utils import emit_util, output
 from pathlib import Path
+
 
 def setup():
     # Get current directory

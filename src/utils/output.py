@@ -1,6 +1,6 @@
 import os
 
-from constant import OUTPUT_DIR, OUTPUT_EMIT_DIR
+from properties.constant import OUTPUT_DIR, OUTPUT_EMIT_DIR
 
 
 def prepare_dir():

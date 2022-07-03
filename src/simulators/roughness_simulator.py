@@ -3,11 +3,10 @@ import shutil
 import subprocess
 from typing import TextIO
 
-import simulation_input
-from constant import NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_PIPES, \
+from properties.constant import NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_PIPES, \
     INITIAL_ROUGHNESS, ROUGHNESS_INTERVAL_PER_VARIANT, NUMBER_OF_ROUGHNESS_VARIANTS, \
     OUTPUT_ROUGHNESS_DIR, OUTPUT_ROUGHNESS_FILE
-from simulation_output import get_flows, get_pressures, get_heads, get_demands
+from utils.out_util import get_flows, get_pressures, get_heads, get_demands
 
 INP_PIPE_ROUGHNESS_COLUMN_INDEX = 5
 

@@ -3,12 +3,11 @@ import shutil
 import subprocess
 from typing import TextIO
 
-import constant
-import emit_util
-import simulation_input
-from constant import NUMBER_OF_PIPES, NUMBER_OF_JUNCTIONS, EPANET_JAR_FILE, CATEGORY_EMITTERS, \
+from properties import constant
+from utils import emit_util
+from properties.constant import NUMBER_OF_PIPES, EPANET_JAR_FILE, CATEGORY_EMITTERS, \
     OUTPUT_EMIT_DIR, OUTPUT_EMIT_FILE, JUNCTION_IDS
-from simulation_output import get_flows, get_pressures, get_heads, get_demands
+from utils.out_util import get_flows, get_pressures, get_heads, get_demands
 
 INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
 
