@@ -34,7 +34,7 @@ class MadaniScenario(Scenario):
         self.output_file = open(self.__data.output_dir + "water_flow_forecast.csv", 'w')
 
     def __write_header(self):
-        header: list[str] = ['Adjusted Junction', 'Emitter Coeff.']
+        header: list[str] = ['Time', 'Adjusted Junction', 'Emitter Coeff.']
 
         for pipe in range(1, self.__data.number_of_pipes + 1):
             header.append(f'P{pipe} Flow (LPS)')
@@ -67,21 +67,32 @@ class MadaniScenario(Scenario):
         subprocess.call(["java", "-cp", EpanetSimulator.JAR_FILE, "org.addition.epanet.EPATool",
                          inp_file])
 
-        # Write down the result
-        csv_record = ",".join([
-            adjusted_junction_label,
-            emit_label,
-            *get_flows(inp_file),
-            *get_pressures(inp_file),
-            *get_heads(inp_file),
-            *get_demands(inp_file)
-        ])
-        self.output_file.write(csv_record + '\n')
+        # Times, used if scenario is based on time-series
+        times = self.__data.times
+        if len(times) == 0:
+            times = ['00:00:00']
+
+        # Write down the result for every time period
+        for time in times:
+            csv_record = ",".join([
+                time,
+                adjusted_junction_label,
+                emit_label,
+                *get_flows(inp_file, time=time),
+                *get_pressures(inp_file, time=time),
+                *get_heads(inp_file, time=time),
+                *get_demands(inp_file, time=time)
+            ])
+            self.output_file.write(csv_record + '\n')
 
     def _on_arrange(self):
         self.__open_output_file()
         self.__write_header()
-        self.__write_row(self.__data.initial_inp_file, '-', '-')
+        self.__write_row(
+            inp_file=self.__data.initial_inp_file,
+            adjusted_junction_label='-',
+            emit_label='-'
+        )
 
     def _on_simulate(self):
         # Simulate all emitter coefficient variants on each pipe
@@ -101,7 +112,11 @@ class MadaniScenario(Scenario):
             )
 
             # Write row
-            self.__write_row(inp_file, str(junction_id), str(emit))
+            self.__write_row(
+                inp_file=inp_file,
+                adjusted_junction_label=str(junction_id),
+                emit_label=str(emit)
+            )
 
     def _on_clean_up(self):
         self.output_file.close()

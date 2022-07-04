@@ -27,7 +27,7 @@ def _extract_result(inp_file: str, extension: str, column_index: int, component_
             return line[column_index]
 
 
-def _extract_results(inp_file: str, extension: str, column_index: int) -> list[str]:
+def _extract_results(inp_file: str, extension: str, column_index: int, time: str = '00:00:00') -> list[str]:
     results = []
 
     try:
@@ -46,12 +46,15 @@ def _extract_results(inp_file: str, extension: str, column_index: int) -> list[s
         if extension == NODES_OUT_EXTENSION and line[0] == '71':
             continue
 
+        if line[1] != time:
+            continue
+
         results.append(line[column_index].replace('\n', ''))
 
     return results
 
 
-def get_flows(inp_file: str):
+def get_flows(inp_file: str, time: str = '00:00:00'):
     return _extract_results(
         inp_file=inp_file,
         extension=LINKS_OUT_EXTENSION,
@@ -59,7 +62,7 @@ def get_flows(inp_file: str):
     )
 
 
-def get_pressures(inp_file: str):
+def get_pressures(inp_file: str, time: str = '00:00:00'):
     return _extract_results(
         inp_file=inp_file,
         extension=NODES_OUT_EXTENSION,
@@ -67,7 +70,7 @@ def get_pressures(inp_file: str):
     )
 
 
-def get_heads(inp_file: str):
+def get_heads(inp_file: str, time: str = '00:00:00'):
     return _extract_results(
         inp_file=inp_file,
         extension=NODES_OUT_EXTENSION,
@@ -75,7 +78,7 @@ def get_heads(inp_file: str):
     )
 
 
-def get_demands(inp_file: str):
+def get_demands(inp_file: str, time: str = '00:00:00'):
     return _extract_results(
         inp_file=inp_file,
         extension=NODES_OUT_EXTENSION,

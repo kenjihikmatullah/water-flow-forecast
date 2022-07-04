@@ -1,7 +1,9 @@
 from scenario_data.madani_scenario_data import MadaniScenarioData
 
-
 def get_data():
+    """
+    Scenario data where a leak in single period (snapshot) is simulated
+    """
     return MadaniScenarioData(
         output_dir='output/emit/',
         number_of_pipes=104,
