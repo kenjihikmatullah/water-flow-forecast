@@ -7,12 +7,15 @@ from typing import TextIO
 from scenario_data.madani_scenario_data import MadaniScenarioData
 from utils import emit_util, inp_util
 from utils.out_util import get_flows, get_pressures, get_heads, get_demands
-from simulators.epanet_simulator import EpanetSimulator
+from models.simulator import Simulator
 
 
 class MadaniScenario(Scenario):
     """
-    Simulate leak by setting emitter coeff. to each junction.
+    Simulate leak by setting some attributes:
+    - emitter coeff. of each junction.
+    - demand pattern
+
     This scenario aims to get WDS state when a leak occurs.
     """
 
@@ -36,19 +39,19 @@ class MadaniScenario(Scenario):
     def __write_header(self):
         header: list[str] = ['Time', 'Adjusted Junction', 'Emitter Coeff.']
 
-        for pipe in range(1, self.__data.number_of_pipes + 1):
-            header.append(f'P{pipe} Flow (LPS)')
+        for pipe_id in self.__data.pipe_ids:
+            header.append(f'P{pipe_id} Flow (LPS)')
 
         header.append('...what is this?')
 
-        for junction in self.__data.junction_ids:
-            header.append(f'J{junction} Pressure (m)')
+        for junction_id in self.__data.junction_ids:
+            header.append(f'J{junction_id} Pressure (m)')
 
-        for junction in self.__data.junction_ids:
-            header.append(f'J{junction} Head (m)')
+        for junction_id in self.__data.junction_ids:
+            header.append(f'J{junction_id} Head (m)')
 
-        for junction in self.__data.junction_ids:
-            header.append(f'J{junction} Demand (LPS)')
+        for junction_id in self.__data.junction_ids:
+            header.append(f'J{junction_id} Demand (LPS)')
 
         self.output_file.write(",".join(header) + '\n')
 
@@ -56,7 +59,7 @@ class MadaniScenario(Scenario):
         return inp_util.generate_custom_inp_file(
             initial_inp_file=self.__data.initial_inp_file,
             target_file_path=f'{self.__data.output_dir}temp/J{junction_id}-ec{emit}.inp',
-            customized_category=EpanetSimulator.CATEGORY_EMITTERS,
+            customized_category=Simulator.CATEGORY_EMITTERS,
             customized_component_id=str(junction_id),
             customized_column_index=MadaniScenario.INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
             custom_value=str(emit)
@@ -64,7 +67,7 @@ class MadaniScenario(Scenario):
 
     def __write_row(self, inp_file: str, adjusted_junction_label: str, emit_label: str):
         # Simulate
-        subprocess.call(["java", "-cp", EpanetSimulator.JAR_FILE, "org.addition.epanet.EPATool",
+        subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
                          inp_file])
 
         # Times, used if scenario is based on time-series
