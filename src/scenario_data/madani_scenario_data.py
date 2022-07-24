@@ -1,14 +1,36 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from models.timing_type import TimingType
+from models.inp_metadata import InpMetadata
+from utils.impl.InpMetadataCreatorImpl import InpMetadataCreatorImpl
 
 
 @dataclass
 class MadaniScenarioData:
-    output_dir: str
-    number_of_pipes: int
     initial_inp_file: str
-    junction_ids: list[int]
+    output_dir: str
 
-    timing_type: TimingType = TimingType.SINGLE_PERIOD
-    times: list[str] = field(default_factory=list)
+    default_demand_based_on_sensors = 0.5
+    """
+    Real demand (not simulation) of junction in LPS 
+    
+    Later on, this value should be described
+    - specifically for each junction
+    - real-time based on data from sensors in the area
+    """
+
+    initial_inp_metadata: InpMetadata = None
+
+    def __post_init__(self):
+        self.initial_inp_metadata = InpMetadataCreatorImpl().create(self.initial_inp_file)
+
+    @property
+    def junction_ids(self):
+        return self.initial_inp_metadata.junction_ids
+
+    @property
+    def pipe_ids(self):
+        return self.initial_inp_metadata.pipe_ids
+
+    @property
+    def times(self):
+        return self.initial_inp_metadata.times

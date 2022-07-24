@@ -1,5 +1,5 @@
 from utils import inp_util, out_util
-from simulators.epanet_simulator import EpanetSimulator
+from models.simulator import Simulator
 import subprocess
 
 INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
@@ -25,14 +25,14 @@ def get_proper_emit(initial_inp_file: str, output_dir: str, adjusted_junction_id
         inp_file = inp_util.generate_custom_inp_file(
             initial_inp_file=initial_inp_file,
             target_file_path=f'{output_dir}temp-hill-climbing/j-index-{adjusted_junction_id}-ec{emit}.inp',
-            customized_category=EpanetSimulator.CATEGORY_EMITTERS,
+            customized_category=Simulator.CATEGORY_EMITTERS,
             customized_component_id=str(adjusted_junction_id),
             customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
             custom_value=str(emit)
         )
 
         # Simulate
-        subprocess.call(["java", "-cp", EpanetSimulator.JAR_FILE, "org.addition.epanet.EPATool",
+        subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
                          inp_file])
 
         # Check whether desired actual demand is achieved
