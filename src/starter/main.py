@@ -3,7 +3,7 @@ import os
 from scenarios.scenario import Scenario
 from scenarios.madani_scenario import MadaniScenario
 from pathlib import Path
-from properties.scenario_data import its_madani_scenario_data
+from properties.cases import its_001_madani_case, its_002_madani_case
 
 
 def setup():
@@ -19,9 +19,8 @@ if __name__ == "__main__":
     setup()
 
     scenarios: list[Scenario] = [
-        MadaniScenario(data=its_madani_scenario_data.get_data())
+        MadaniScenario(data=its_002_madani_case.get_data()),
     ]
 
     for scenario in scenarios:
         scenario.run()
-
