@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from models.inp_metadata import InpMetadata
-from utils.impl.InpMetadataCreatorImpl import InpMetadataCreatorImpl
+from utils.impl.inp_metadata_creator_impl import InpMetadataCreatorImpl
 
 
 @dataclass
@@ -32,5 +32,5 @@ class MadaniScenarioData:
         return self.initial_inp_metadata.pipe_ids
 
     @property
-    def times(self):
-        return self.initial_inp_metadata.times
+    def time_steps(self):
+        return self.initial_inp_metadata.time_steps

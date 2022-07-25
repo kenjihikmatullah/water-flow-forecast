@@ -2,7 +2,7 @@ from models.inp_metadata import InpMetadata
 from models.junction import Junction
 from models.pipe import Pipe
 from models.simulator import Simulator
-from utils.InpMetadataCreator import InpMetadataCreator
+from utils.inp_metadata_creator import InpMetadataCreator
 
 
 # TODO: Make this injectable
@@ -15,7 +15,7 @@ class InpMetadataCreatorImpl(InpMetadataCreator):
         return InpMetadata(
             junctions=self.__get_junctions(lines),
             pipes=self.__get_pipes(lines),
-            times=self.__get_times(lines)
+            time_steps=self.__get_time_steps(lines)
         )
 
     @classmethod
@@ -85,7 +85,7 @@ class InpMetadataCreatorImpl(InpMetadataCreator):
         return pipes
 
     @classmethod
-    def __get_times(cls, lines: list[str]) -> list[str]:
+    def __get_time_steps(cls, lines: list[str]) -> list[str]:
         duration = 0
         pattern_timestep = 0
         pattern_start = 0

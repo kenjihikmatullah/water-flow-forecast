@@ -32,7 +32,7 @@ class MadaniScenario(Scenario):
 
         os.makedirs(self.__data.output_dir)
         os.makedirs(self.__data.output_dir + 'temp/')
-        os.makedirs(self.__data.output_dir + 'temp-hill-climbing/')
+        os.makedirs(self.__data.output_dir + 'temp_hill_climbing/')
 
         self.output_file = open(self.__data.output_dir + "water_flow_forecast.csv", 'w')
 
@@ -47,24 +47,10 @@ class MadaniScenario(Scenario):
 
         self.output_file.write(",".join(header) + '\n')
 
-    def __write_no_leak_rows(self):
-        for time_step in self.__data.times:
-            """Simulate no leak on each time step"""
-
-            # Write row
-            csv_record = ",".join([
-                time_step,
-                '',
-                '',
-                *get_actual_demands(self.__data.initial_inp_file, time_step=time_step),
-                *get_flows(self.__data.initial_inp_file, time_step=time_step)
-            ])
-            self.output_file.write(csv_record + '\n')
-
-    def __generate_inp_file(self, junction_id: int, emit: int):
+    def __generate_inp_file(self, junction_id: int, emit: int, time_step: str):
         return inp_util.generate_custom_inp_file(
             initial_inp_file=self.__data.initial_inp_file,
-            target_file_path=f'{self.__data.output_dir}temp/J{junction_id}-ec{emit}.inp',
+            target_file_path=f'{self.__data.output_dir}temp/{time_step.replace(":", "_")}_set_junction_{junction_id}_emit_{emit}.inp',
             customized_category=Simulator.CATEGORY_EMITTERS,
             customized_component_id=str(junction_id),
             customized_column_index=MadaniScenario.INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
@@ -74,12 +60,22 @@ class MadaniScenario(Scenario):
     def _on_arrange(self):
         self.__open_output_file()
         self.__write_header()
-        self.__write_no_leak_rows()
 
     def _on_simulate(self):
-        for time_step in self.__data.times:
-            """Simulate leak on each time step"""
+        for time_step in self.__data.time_steps:
+            """Simulate on each time step"""
 
+            # Simulate no leak
+            csv_record = ",".join([
+                time_step,
+                '',
+                '',
+                *get_actual_demands(self.__data.initial_inp_file, time_step=time_step),
+                *get_flows(self.__data.initial_inp_file, time_step=time_step)
+            ])
+            self.output_file.write(csv_record + '\n')
+
+            # Simulate leak
             for junction_id in self.__data.junction_ids:
                 """Simulate leak on each pipe by setting emitter coefficient"""
 
@@ -96,7 +92,8 @@ class MadaniScenario(Scenario):
                 # Set up simulation
                 inp_file = self.__generate_inp_file(
                     junction_id=junction_id,
-                    emit=emit
+                    emit=emit,
+                    time_step=time_step
                 )
 
                 # Simulate

@@ -25,7 +25,7 @@ def get_proper_emit(initial_inp_file: str, output_dir: str, adjusted_junction_id
         # Set emit
         inp_file = inp_util.generate_custom_inp_file(
             initial_inp_file=initial_inp_file,
-            target_file_path=f'{output_dir}temp-hill-climbing/j-index-{adjusted_junction_id}-ec{emit}.inp',
+            target_file_path=f'{output_dir}temp_hill_climbing/{time_step.replace(":", "_")}_set_junction_{adjusted_junction_id}_emit_{emit}.inp',
             customized_category=Simulator.CATEGORY_EMITTERS,
             customized_component_id=str(adjusted_junction_id),
             customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
