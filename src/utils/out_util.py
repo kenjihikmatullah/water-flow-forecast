@@ -1,5 +1,8 @@
 from typing.io import TextIO
 
+from models.junction import Junction
+from models.pipe import Pipe
+
 LINKS_OUT_EXTENSION = '.links.out'
 NODES_OUT_EXTENSION = '.nodes.out'
 
@@ -100,3 +103,66 @@ def get_actual_demand(inp_file: str, junction_id: int, time_step: str = '00:00:0
         component_id=junction_id,
         time_step=time_step
     )
+
+
+def get_junctions(inp_file: str, time_step: str = '00:00:00') -> list[Junction]:
+    result_file: TextIO | None = None
+    junctions: list[Junction] = []
+
+    try:
+        result_file = open(f'{inp_file}{NODES_OUT_EXTENSION}', 'r')
+        lines = result_file.readlines()
+
+    except OSError as e:
+        raise OSError(e, f'Failed to open {inp_file}{NODES_OUT_EXTENSION}')
+
+    finally:
+        if result_file is not None:
+            result_file.close()
+
+    for i in range(0, len(lines) - NUMBER_OF_HEADER_ROWS):
+        line = lines[i + NUMBER_OF_HEADER_ROWS].split('\t')
+
+        if line[0] == '71':
+            continue
+
+        if line[1] != time_step:
+            continue
+
+        junction = Junction(
+            id=line[0],
+            actual_demand=float(line[NODES_OUT_ACTUAL_DEMAND_COLUMN_INDEX].replace('\n', ''))
+        )
+        junctions.append(junction)
+
+    return junctions
+
+
+def get_pipes(inp_file: str, time_step: str = '00:00:00') -> list[Pipe]:
+    result_file: TextIO | None = None
+    pipes: list[Pipe] = []
+
+    try:
+        result_file = open(f'{inp_file}{LINKS_OUT_EXTENSION}', 'r')
+        lines = result_file.readlines()
+
+    except OSError as e:
+        raise OSError(e, f'Failed to open {inp_file}{LINKS_OUT_EXTENSION}')
+
+    finally:
+        if result_file is not None:
+            result_file.close()
+
+    for i in range(0, len(lines) - NUMBER_OF_HEADER_ROWS):
+        line = lines[i + NUMBER_OF_HEADER_ROWS].split('\t')
+
+        if line[1] != time_step:
+            continue
+
+        pipe = Pipe(
+            id=line[0],
+            flow=float(line[LINKS_OUT_FLOW_COLUMN_INDEX].replace('\n', '')),
+        )
+        pipes.append(pipe)
+
+    return pipes
