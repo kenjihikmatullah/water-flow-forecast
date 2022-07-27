@@ -11,16 +11,23 @@ class MadaniCsvExporter(CsvExporter):
     def __init__(self, data: MadaniScenarioData):
         self.__data = data
 
-        if os.path.exists(data.output_dir):
-            shutil.rmtree(data.output_dir)
+    def export(self, session_result: MadaniSessionResult):
+        self.__initialize()
+        self.__write_header()
+        self.__write_body(session_result)
+        self.close()
 
-        os.makedirs(data.output_dir)
-        os.makedirs(data.output_dir + 'temp/')
-        os.makedirs(data.output_dir + 'temp_hill_climbing/')
+    def __initialize(self):
+        if os.path.exists(self.__data.output_dir):
+            shutil.rmtree(self.__data.output_dir)
 
-        self._initialize(data.output_dir + "water_flow_forecast.csv")
+        os.makedirs(self.__data.output_dir)
+        os.makedirs(self.__data.output_dir + 'temp/')
+        os.makedirs(self.__data.output_dir + 'temp_hill_climbing/')
 
-    def write_header(self):
+        self._initialize(self.__data.output_dir + "water_flow_forecast.csv")
+
+    def __write_header(self):
         header: list[str] = ['time_step', 'adjusted_junction_id', 'emit']
 
         for junction_id in self.__data.junction_ids:
@@ -31,7 +38,7 @@ class MadaniCsvExporter(CsvExporter):
 
         self._write_row(header)
 
-    def write_body(self, session_result: MadaniSessionResult):
+    def __write_body(self, session_result: MadaniSessionResult):
         for result in session_result.results:
             row = [
                 result.time_step,

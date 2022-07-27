@@ -1,4 +1,5 @@
 from exporter.madani.madani_csv_exporter import MadaniCsvExporter
+from exporter.madani.madani_db_exporter import MadaniDbExporter
 from result.madani.madani_result import MadaniResult
 from result.madani.madani_session_result import MadaniSessionResult
 from scenarios.scenario import Scenario
@@ -37,9 +38,13 @@ class MadaniScenario(Scenario):
         )
 
     def _on_arrange(self):
-        self.__exporter = MadaniCsvExporter(self.__data)
-        self.__exporter.write_header()
         self.__session_result = MadaniSessionResult()
+
+        # TODO: Based on request
+        self.__exporters = [
+            MadaniDbExporter(),
+            MadaniCsvExporter(self.__data)
+        ]
 
     def _on_simulate(self):
         for time_step in self.__data.time_steps:
@@ -61,8 +66,6 @@ class MadaniScenario(Scenario):
 
             # Simulate leak
             for junction_id in self.__data.junction_ids:
-                if junction_id == '3':
-                    return
                 """Simulate leak on each pipe by setting emitter coefficient"""
 
                 # Get proper emit to reproduce actual demand of ... LPS
@@ -99,5 +102,5 @@ class MadaniScenario(Scenario):
                 )
 
     def _on_post_simulate(self):
-        self.__exporter.write_body(self.__session_result)
-        self.__exporter.close()
+        for exporter in self.__exporters:
+            exporter.export(self.__session_result)
