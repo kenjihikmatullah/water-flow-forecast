@@ -43,7 +43,7 @@ class MadaniCsvExporter(CsvExporter):
             row = [
                 result.time_step,
                 result.adjusted_junction_id or '',
-                str(result.emit),
+                str(result.adjusted_junction_emit),
                 *map(lambda j: str(j.actual_demand), result.junctions),
                 *map(lambda j: str(j.flow), result.pipes)
             ]

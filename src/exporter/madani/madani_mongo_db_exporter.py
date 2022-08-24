@@ -5,7 +5,7 @@ from result.madani.madani_result import MadaniResult
 from result.madani.madani_session_result import MadaniSessionResult
 
 
-class MadaniDbExporter:
+class MadaniMongoDbExporter:
 
     def __init__(self):
         self.db_client = MongoDbClient()
@@ -27,9 +27,10 @@ class MadaniDbExporter:
 
     def map_result_to_dict(self, result: MadaniResult):
         return {
+            'session_id': None,  # TODO: Generate dynamically
             'time_step': result.time_step,
             'adjusted_junction_id': result.adjusted_junction_id,
-            'emit': result.emit,
+            'emit': result.adjusted_junction_emit,
             'junctions': list(map(self.map_junction_to_dict, result.junctions)),
             'pipes': list(map(self.map_pipe_to_dict, result.pipes))
         }

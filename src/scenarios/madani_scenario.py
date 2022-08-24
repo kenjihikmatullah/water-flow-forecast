@@ -1,5 +1,6 @@
 from exporter.madani.madani_csv_exporter import MadaniCsvExporter
-from exporter.madani.madani_db_exporter import MadaniDbExporter
+from exporter.madani.madani_maria_db_exporter import MadaniMariaDbExporter
+from exporter.madani.madani_mongo_db_exporter import MadaniMongoDbExporter
 from result.madani.madani_result import MadaniResult
 from result.madani.madani_session_result import MadaniSessionResult
 from scenarios.scenario import Scenario
@@ -42,7 +43,8 @@ class MadaniScenario(Scenario):
 
         # TODO: Based on request
         self.__exporters = [
-            MadaniDbExporter(),
+            MadaniMariaDbExporter(),
+            # MadaniMongoDbExporter(),
             MadaniCsvExporter(self.__data)
         ]
 
@@ -58,7 +60,8 @@ class MadaniScenario(Scenario):
                     custom_inp_file=self.__data.initial_inp_file,
                     time_step=time_step,
                     adjusted_junction_id=None,
-                    emit=None,
+                    adjusted_junction_emit=None,
+                    adjusted_junction_leak=None,
                     junctions=out_util.get_junctions(inp_file=self.__data.initial_inp_file, time_step=time_step),
                     pipes=out_util.get_pipes(inp_file=self.__data.initial_inp_file, time_step=time_step)
                 )
@@ -89,15 +92,27 @@ class MadaniScenario(Scenario):
                 subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
                                  inp_file])
 
+                # Get result
+                result_junctions = out_util.get_junctions(inp_file=inp_file, time_step=time_step)
+                result_pipes = out_util.get_pipes(inp_file=inp_file, time_step=time_step)
+
+                # Calculate simulated leak
+                junction_when_no_leak = self.__session_result.get_junction_result_when_no_leak(junction_id, '01:00:00')
+                junction_when_leak = list(filter(lambda j: j.id == junction_id, result_junctions))[0]
+                actual_demand_when_no_leak = junction_when_no_leak.actual_demand
+                actual_demand_when_leak = junction_when_leak.actual_demand
+                leak = actual_demand_when_leak - actual_demand_when_no_leak
+
                 # Put result
                 self.__session_result.results.append(
                     MadaniResult(
                         custom_inp_file=inp_file,
                         time_step=time_step,
                         adjusted_junction_id=junction_id,
-                        emit=emit,
-                        junctions=out_util.get_junctions(inp_file=inp_file, time_step=time_step),
-                        pipes=out_util.get_pipes(inp_file=inp_file, time_step=time_step)
+                        adjusted_junction_emit=emit,
+                        adjusted_junction_leak=leak,
+                        junctions=result_junctions,
+                        pipes=result_pipes
                     )
                 )
 
