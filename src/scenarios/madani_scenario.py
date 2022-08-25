@@ -8,8 +8,9 @@ import subprocess
 from typing import TextIO
 
 from scenario_data.madani_scenario_data import MadaniScenarioData
-from utils import emit_util, inp_util, out_util
+from utils import inp_util, out_util
 from models.simulator import Simulator
+from utils.impl.emit_util_impl import EmitUtilImpl
 
 
 class MadaniScenario(Scenario):
@@ -73,7 +74,7 @@ class MadaniScenario(Scenario):
 
                 # Get proper emit to reproduce actual demand of ... LPS
                 # (based on scenario data)
-                emit = emit_util.get_proper_emit(
+                emit = EmitUtilImpl().get_proper_emit(
                     initial_inp_file=self.__data.initial_inp_file,
                     output_dir=self.__data.output_dir,
                     adjusted_junction_id=junction_id,
