@@ -1,3 +1,5 @@
+INP_EMITTERS_COEFFICIENT_COLUMN_INDEX = 1
+
 def change_property_value(lines: list[str], category: str, component_id: str, column_index: int, new_value: str):
     in_category = False
 

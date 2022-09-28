@@ -14,14 +14,14 @@ class MariaDbClient:
                 port=3306,
                 database="leak_detection"
             )
-            self.__cursor = self.connection.cursor()
+            self.cursor = self.connection.cursor()
 
         except mariadb.Error as e:
             print(f"Error connecting to MariaDB: {e}")
 
     def execute(self, statement, data):
         try:
-            self.__cursor.execute(statement, data)
+            self.cursor.execute(statement, data)
 
             # self.__cursor.execute("INSERT INTO table_test(name) VALUES(?)", ["amir"])
             self.connection.commit()
@@ -31,7 +31,7 @@ class MariaDbClient:
 
     def create_database(self):
         statement = 'CREATE DATABASE `leak_detection`'
-        self.__cursor.execute(statement)
+        self.cursor.execute(statement)
 
     def create_table(self, pipe_ids: list[str]):
         pipe_flow_columns = ""
@@ -55,4 +55,4 @@ class MariaDbClient:
             COLLATE='utf8mb4_general_ci'
         """
 
-        self.__cursor.execute(statement)
+        self.cursor.execute(statement)
