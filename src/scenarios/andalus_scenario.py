@@ -2,6 +2,7 @@ import subprocess
 from typing import TextIO
 
 from exporter.madani.madani_maria_db_exporter import MadaniMariaDbExporter
+from exporter.madani.madani_per_time_maria_db_exporter import MadaniPerTimeMariaDbExporter
 from models.simulator import Simulator
 from result.madani.madani_result import MadaniResult
 from result.madani.madani_session_result import MadaniSessionResult
@@ -41,41 +42,46 @@ class AndalusScenario(Scenario):
 
         # TODO: Based on request
         self.__exporters = [
-            MadaniMariaDbExporter(table='andalus_results'),
+            # MadaniMariaDbExporter(table='andalus_results'),
+            MadaniPerTimeMariaDbExporter(),
         ]
 
     def _on_simulate(self):
         for time_step in self.__data.time_steps:
             """Simulate on each time step"""
 
-            # if time_step == '03:00:00':
-            #     break
-
             # Simulate no leak
             subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
                              self.__data.initial_inp_file])
-            self.__session_result.results.append(
-                MadaniResult(
+
+            pipes_when_no_leak = out_util.get_pipes(inp_file=self.__data.initial_inp_file, time_step=time_step)
+            for p in pipes_when_no_leak:
+                p.base_flow = p.flow
+
+            result_when_no_leak = MadaniResult(
                     custom_inp_file=self.__data.initial_inp_file,
                     time_step=time_step,
                     adjusted_junction_id=None,
                     adjusted_junction_emit=None,
                     adjusted_junction_leak=None,
                     junctions=out_util.get_junctions(inp_file=self.__data.initial_inp_file, time_step=time_step),
-                    pipes=out_util.get_pipes(inp_file=self.__data.initial_inp_file, time_step=time_step)
+                    pipes=pipes_when_no_leak
                 )
-            )
+            self.__session_result.results.append(result_when_no_leak)
 
             for junction_id in self.__data.junction_ids:
                 """Simulate leak on each pipe by setting emitter coefficient"""
 
-                # if int(junction_id) > 3:
-                #     continue
+                # if time_step == '02:00:00':
+                #     break
+                #
+                # if int(junction_id) > 4:
+                #     break
 
                 junction_when_no_leak = self.__session_result.get_junction_result_when_no_leak(junction_id, '01:00:00')
                 demand_when_no_leak = junction_when_no_leak.actual_demand
 
-                emit = EmitUtilImpl().get_emit_to_simulate_certain_leak(
+                emit_to_simulate_leak_result = EmitUtilImpl().get_emit_to_simulate_certain_leak(
                     initial_inp_file=self.__data.initial_inp_file,
                     output_dir=self.__data.output_dir,
                     adjusted_junction_id=junction_id,
@@ -83,6 +89,8 @@ class AndalusScenario(Scenario):
                     demand_when_no_leak=demand_when_no_leak,
                     time_step=time_step
                 )
+                emit = emit_to_simulate_leak_result.emit
+                actual_leak = emit_to_simulate_leak_result.actual_leak
 
                 # Set up simulation
                 inp_file = self.__generate_inp_file(
@@ -98,6 +106,11 @@ class AndalusScenario(Scenario):
                 # Get result
                 result_junctions = out_util.get_junctions(inp_file=inp_file, time_step=time_step)
                 result_pipes = out_util.get_pipes(inp_file=inp_file, time_step=time_step)
+                for pipe in result_pipes:
+                    for p in pipes_when_no_leak:
+                        if pipe.id == p.id:
+                            pipe.base_flow = p.flow
+                            break
 
                 # Put result
                 self.__session_result.results.append(
@@ -106,7 +119,7 @@ class AndalusScenario(Scenario):
                         time_step=time_step,
                         adjusted_junction_id=junction_id,
                         adjusted_junction_emit=emit,
-                        adjusted_junction_leak=self.__data.default_leak_to_simulate,
+                        adjusted_junction_leak=actual_leak,
                         junctions=result_junctions,
                         pipes=result_pipes
                     )
