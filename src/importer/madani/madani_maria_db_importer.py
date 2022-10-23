@@ -52,7 +52,7 @@ class MadaniMariaDbImporter:
                     pipes.append(
                         Pipe(
                             id=pipe_id,
-                            flow=row[attr_key]
+                            delta_flow=row[attr_key]
                         )
                     )
 

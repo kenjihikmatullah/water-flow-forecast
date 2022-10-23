@@ -43,7 +43,7 @@ class MadaniPerTimeMariaDbExporter:
         attribute_values = [result.time_step, result.adjusted_junction_id, result.adjusted_junction_emit,
                             result.adjusted_junction_leak]
         for pipe in result.pipes:
-            attribute_values.append(pipe.delta_flow)
+            attribute_values.append(pipe.get_delta_flow())
 
         statement = f'INSERT INTO {table}({attribute_names})  VALUES ({attribute_values_question})'
 
