@@ -1,4 +1,6 @@
 from models.ed_rank import EdRank
+from models.leak_localization_record import LeakLocalizationRecord
+from repository.leak_localization_repository import LeakLocalizationRepository
 from result.madani.madani_result import MadaniResult
 from result.madani.madani_session_result import MadaniSessionResult
 from utils.euclidean_distance_util import EuclideanDistanceUtil
@@ -15,22 +17,20 @@ class EdLeakDetectionV2:
         num_total = 0
 
         for key in self.session_result_per_time.keys():
-            if key == '02:00:00':
-                break
 
             for result in self.session_result_per_time.get(key).results:
-                if str(result.adjusted_junction_id) == '4':
-                    break
+                if str(result.adjusted_junction_id) not in ['1', '2', '3', '4']:
+                    continue
 
-                leaky_junction_id = result.adjusted_junction_id
-                guess_of_leaky_junction_id = self.detect_leak(result)
+                actual_leaking_junction_id = result.adjusted_junction_id
+                predicted_leaking_junction_id = self.detect_leak(result)
 
-                if leaky_junction_id is not None:
-                    print('Leaky junction id: ' + leaky_junction_id)
-                    print('Guess of leaky junction id: ' + guess_of_leaky_junction_id)
+                if actual_leaking_junction_id is not None:
+                    print('ID of Actual Leaking Junction: ' + actual_leaking_junction_id)
+                    print('ID of Predicted Leaking Junction: ' + predicted_leaking_junction_id)
 
                     num_total += 1
-                    if leaky_junction_id == guess_of_leaky_junction_id:
+                    if actual_leaking_junction_id == predicted_leaking_junction_id:
                         num_correct += 1
 
         print(f'Correct {num_correct}/{num_total} = {num_correct / num_total * 100}%')
@@ -59,15 +59,35 @@ class EdLeakDetectionV2:
             #         ranking
             #     )
             # )[:3])
-            print('rank: ' + str(list(
-                map(
-                    lambda r: r.result_to_compare.adjusted_junction_id,
-                    ranking
+            # print('rank: ' + str(list(
+            #     map(
+            #         lambda r: r.result_to_compare.adjusted_junction_id,
+            #         ranking
+            #     )
+            # )[:3]))
+
+            prediction = ranking[0].result_to_compare.adjusted_junction_id
+            guess_of_leaky_junction_id.append(prediction)
+
+
+            time_step_mapping = {
+                '01:00:00': 'MONDAY',
+                '02:00:00': 'TUESDAY',
+                '03:00:00': 'WEDNESDAY',
+                '04:00:00': 'THURSDAY',
+                '05:00:00': 'FRIDAY',
+                '06:00:00': 'SATURDAY',
+                '07:00:00': 'SUNDAY',
+            }
+
+            LeakLocalizationRepository().store(
+                LeakLocalizationRecord(
+                    actual_leaking=result.adjusted_junction_id,
+                    time_step_of_prediction=time_step_mapping.get(result.time_step),
+                    prediction=prediction
                 )
-            )[:3]))
+            )
 
-            guess_of_leaky_junction_id.append(ranking[0].result_to_compare.adjusted_junction_id)
-
-        print('all guess of leaky junction id' + str(guess_of_leaky_junction_id))
+        # print('all guess of leaky junction id' + str(guess_of_leaky_junction_id))
 
         return max(set(guess_of_leaky_junction_id), key=guess_of_leaky_junction_id.count)
