@@ -2,7 +2,6 @@ from pymongo import MongoClient
 
 
 class MongoDbClient:
-
     __DATABASE_NAME = 'leak_detection'
 
     def __init__(self):

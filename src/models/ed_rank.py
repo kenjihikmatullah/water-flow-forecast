@@ -5,9 +5,9 @@ from result.madani.madani_result import MadaniResult
 
 class EdRank:
 
-    def __init__(self, result_to_compare: MadaniResult, result: MadaniResult, score: float):
-        self.result_to_compare = result_to_compare
-        self.result = result
+    def __init__(self, simulation_case: MadaniResult, actual_case: MadaniResult, score: float):
+        self.simulation_case = simulation_case
+        self.actual_case = actual_case
         self.score = score
 
     def toJSON(self):

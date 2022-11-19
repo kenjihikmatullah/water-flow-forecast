@@ -19,10 +19,7 @@ class EdLeakDetectionV2:
         num_total = 0
 
         for key in self.simulation_session_result_per_time.keys():
-
             for simulation_result in self.simulation_session_result_per_time.get(key).results:
-                if str(simulation_result.adjusted_junction_id) not in ['1', '2', '3', '4']:
-                    continue
 
                 actual_leaking_junction_id = simulation_result.adjusted_junction_id
                 predicted_leaking_junction_id = self.detect_leak(simulation_result, session_id=self.simulation_session_result_per_time.get(key).session_id)
@@ -35,10 +32,12 @@ class EdLeakDetectionV2:
                     if actual_leaking_junction_id == predicted_leaking_junction_id:
                         num_correct += 1
 
-        print(f'Correct {num_correct}/{num_total} = {num_correct / num_total * 100}%')
+        # print(f'Correct {num_correct}/{num_total} = {num_correct / num_total * 100}%')
 
     def detect_leak(self, simulation_result: MadaniResult, session_id: str) -> str:
         guess_of_leaking_junction_id = []
+
+        print(self.actual_session_result_per_time)
 
         for key in self.actual_session_result_per_time.keys():
             ranking: list[EdRank] = []
@@ -47,30 +46,19 @@ class EdLeakDetectionV2:
                 if actual_result.adjusted_junction_id is None:
                     continue
 
-                score = self.ed_util.calculate_based_on_delta_flow(simulation_result, actual_result)
+                score = self.ed_util.calculate_based_on_delta_flow(actual_case=actual_result, simulation_case=simulation_result)
 
                 ranking.append(
-                    EdRank(result=simulation_result, result_to_compare=actual_result, score=score)
+                    EdRank(actual_case=actual_result, simulation_case=simulation_result, score=score)
                 )
 
             ranking.sort(key=lambda r: r.score)
 
-            # print(list(
-            #     map(
-            #         lambda r: r.toJSON(),
-            #         ranking
-            #     )
-            # )[:3])
-            # print('rank: ' + str(list(
-            #     map(
-            #         lambda r: r.result_to_compare.adjusted_junction_id,
-            #         ranking
-            #     )
-            # )[:3]))
+            if len(ranking) == 0:
+                return ''
 
-            prediction = ranking[0].result_to_compare.adjusted_junction_id
+            prediction = ranking[0].simulation_case.adjusted_junction_id
             guess_of_leaking_junction_id.append(prediction)
-
 
             time_step_mapping = {
                 '01:00:00': 'MONDAY',

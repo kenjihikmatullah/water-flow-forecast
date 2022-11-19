@@ -1,13 +1,9 @@
 import os
+from pathlib import Path
 
-from db_client.maria_db_client import MariaDbClient
-from models.inp_metadata import InpMetadata
+from properties.cases import its_andalus_001_case
 from scenarios.andalus_scenario import AndalusScenario
 from scenarios.scenario import Scenario
-from scenarios.madani_scenario import MadaniScenario
-from pathlib import Path
-from properties.cases import its_001_madani_case, its_002_madani_case, its_andalus_001_case
-from utils.impl.inp_metadata_creator_impl import InpMetadataCreatorImpl
 
 
 def setup():

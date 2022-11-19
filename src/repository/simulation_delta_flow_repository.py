@@ -68,7 +68,6 @@ class SimulationDeltaFlowRepository:
 
             values = list(value)
             val = values[0]
-            print(val)
 
             time_step = val['time_step']
             leaking_junction_id = val['leaking_junction_id']
@@ -95,7 +94,7 @@ class SimulationDeltaFlowRepository:
                 )
             )
 
-            return session_result
+        return session_result
 
     def store(self, session_result: MadaniSessionResult):
         for case in session_result.results:

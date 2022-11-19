@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from models.inp_metadata import InpMetadata
-from utils.impl.inp_metadata_creator_impl import InpMetadataCreatorImpl
+from utils.inp_metadata_creator import InpMetadataCreator
 
 
 @dataclass
@@ -12,7 +12,7 @@ class ScenarioData:
     initial_inp_metadata: InpMetadata = None
 
     def __post_init__(self):
-        self.initial_inp_metadata = InpMetadataCreatorImpl().create(self.initial_inp_file)
+        self.initial_inp_metadata = InpMetadataCreator().create(self.initial_inp_file)
 
     @property
     def junction_ids(self):

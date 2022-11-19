@@ -1,8 +1,6 @@
 import subprocess
 from typing import TextIO
 
-from exporter.madani.madani_maria_db_exporter import MadaniMariaDbExporter
-from exporter.madani.madani_per_time_maria_db_exporter import MadaniPerTimeMariaDbExporter
 from models.simulator import Simulator
 from repository.simulation_delta_flow_repository import SimulationDeltaFlowRepository
 from result.madani.madani_result import MadaniResult
@@ -10,7 +8,7 @@ from result.madani.madani_session_result import MadaniSessionResult
 from scenario_data.andalus_scenario_data import AndalusScenarioData
 from scenarios.scenario import Scenario
 from utils import inp_util, out_util
-from utils.impl.emit_util_impl import EmitUtilImpl
+from utils.emit_util import EmitUtil
 from utils.inp_util import INP_EMITTERS_COEFFICIENT_COLUMN_INDEX
 
 
@@ -61,14 +59,14 @@ class AndalusScenario(Scenario):
                 p.base_flow = p.flow
 
             result_when_no_leak = MadaniResult(
-                    custom_inp_file=self.__data.initial_inp_file,
-                    time_step=time_step,
-                    adjusted_junction_id=None,
-                    adjusted_junction_emit=None,
-                    adjusted_junction_leak=None,
-                    junctions=out_util.get_junctions(inp_file=self.__data.initial_inp_file, time_step=time_step),
-                    pipes=pipes_when_no_leak
-                )
+                custom_inp_file=self.__data.initial_inp_file,
+                time_step=time_step,
+                adjusted_junction_id=None,
+                adjusted_junction_emit=None,
+                adjusted_junction_leak=None,
+                junctions=out_util.get_junctions(inp_file=self.__data.initial_inp_file, time_step=time_step),
+                pipes=pipes_when_no_leak
+            )
             self.__session_result.results.append(result_when_no_leak)
 
             for junction_id in self.__data.junction_ids:
@@ -83,7 +81,7 @@ class AndalusScenario(Scenario):
                 junction_when_no_leak = self.__session_result.get_junction_result_when_no_leak(junction_id, '01:00:00')
                 demand_when_no_leak = junction_when_no_leak.actual_demand
 
-                emit_to_simulate_leak_result = EmitUtilImpl().get_emit_to_simulate_certain_leak(
+                emit_to_simulate_leak_result = EmitUtil().get_emit_to_simulate_certain_leak(
                     initial_inp_file=self.__data.initial_inp_file,
                     output_dir=self.__data.output_dir,
                     adjusted_junction_id=junction_id,
@@ -132,5 +130,3 @@ class AndalusScenario(Scenario):
         #     exporter.export(self.__session_result)
 
         SimulationDeltaFlowRepository().store(self.__session_result)
-
-

@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from models.inp_metadata import InpMetadata
 from scenario_data.scenario_data import ScenarioData
-from utils.impl.inp_metadata_creator_impl import InpMetadataCreatorImpl
 
 
 @dataclass
