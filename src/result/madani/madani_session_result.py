@@ -6,6 +6,7 @@ from result.madani.madani_result import MadaniResult
 
 @dataclass
 class MadaniSessionResult:
+    session_id: str = None
     results: list[MadaniResult] = field(default_factory=list)
 
     # TODO: Add FK to version of real data from sensors which this simulation is based on

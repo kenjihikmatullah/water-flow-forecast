@@ -4,6 +4,7 @@ from typing import TextIO
 from exporter.madani.madani_maria_db_exporter import MadaniMariaDbExporter
 from exporter.madani.madani_per_time_maria_db_exporter import MadaniPerTimeMariaDbExporter
 from models.simulator import Simulator
+from repository.simulation_delta_flow_repository import SimulationDeltaFlowRepository
 from result.madani.madani_result import MadaniResult
 from result.madani.madani_session_result import MadaniSessionResult
 from scenario_data.andalus_scenario_data import AndalusScenarioData
@@ -39,11 +40,12 @@ class AndalusScenario(Scenario):
 
     def _on_arrange(self):
         self.__session_result = MadaniSessionResult()
+        self.__session_result.session_id = '2022-11-19 08:30:00'
 
         # TODO: Based on request
         self.__exporters = [
             # MadaniMariaDbExporter(table='andalus_results'),
-            MadaniPerTimeMariaDbExporter(),
+            # MadaniPerTimeMariaDbExporter(),
         ]
 
     def _on_simulate(self):
@@ -72,11 +74,11 @@ class AndalusScenario(Scenario):
             for junction_id in self.__data.junction_ids:
                 """Simulate leak on each pipe by setting emitter coefficient"""
 
-                # if time_step == '02:00:00':
-                #     break
-                #
-                # if int(junction_id) > 4:
-                #     break
+                if time_step == '02:00:00':
+                    break
+
+                if int(junction_id) > 4:
+                    break
 
                 junction_when_no_leak = self.__session_result.get_junction_result_when_no_leak(junction_id, '01:00:00')
                 demand_when_no_leak = junction_when_no_leak.actual_demand
@@ -126,7 +128,9 @@ class AndalusScenario(Scenario):
                 )
 
     def _on_post_simulate(self):
-        for exporter in self.__exporters:
-            exporter.export(self.__session_result)
+        # for exporter in self.__exporters:
+        #     exporter.export(self.__session_result)
+
+        SimulationDeltaFlowRepository().store(self.__session_result)
 
 

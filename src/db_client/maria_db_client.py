@@ -41,7 +41,7 @@ class MariaDbClient:
                 pipe_flow_columns += ','
 
         statement = """
-            CREATE TABLE `simulation_results` (
+            CREATE TABLE `andalus_results` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `time_step` VARCHAR(32) NOT NULL,
                 `adjusted_junction_id` VARCHAR(32) NULL,

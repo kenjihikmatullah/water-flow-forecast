@@ -27,9 +27,9 @@ class LeakLocalizationRepository:
         self.db_client.connection.close()
 
     def store(self, record: LeakLocalizationRecord):
-        statement = f'INSERT INTO leak_localization(actual_leaking, time_step_of_prediction, prediction) VALUES (?, ?, ?)'
+        statement = f'INSERT INTO leak_localization(session_id, actual_leaking, time_step_of_prediction, prediction) VALUES (?, ?, ?, ?)'
 
-        self.db_client.execute(statement, [record.actual_leaking, record.time_step_of_prediction, record.prediction])
+        self.db_client.execute(statement, [record.session_id, record.actual_leaking, record.time_step_of_prediction, record.prediction])
         self.db_client.connection.close()
 
     def export_db_to_csv(self):

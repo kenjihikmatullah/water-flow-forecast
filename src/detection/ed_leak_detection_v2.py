@@ -8,22 +8,24 @@ from utils.euclidean_distance_util import EuclideanDistanceUtil
 
 class EdLeakDetectionV2:
 
-    def __init__(self, session_result_per_time: dict[str, MadaniSessionResult]):
-        self.session_result_per_time = session_result_per_time
+    def __init__(self, simulation_session_result_per_time: dict[str, MadaniSessionResult],
+                 actual_session_result_per_time: dict[str, MadaniSessionResult]):
+        self.simulation_session_result_per_time = simulation_session_result_per_time
+        self.actual_session_result_per_time = actual_session_result_per_time
         self.ed_util = EuclideanDistanceUtil()
 
     def execute(self):
         num_correct = 0
         num_total = 0
 
-        for key in self.session_result_per_time.keys():
+        for key in self.simulation_session_result_per_time.keys():
 
-            for result in self.session_result_per_time.get(key).results:
-                if str(result.adjusted_junction_id) not in ['1', '2', '3', '4']:
+            for simulation_result in self.simulation_session_result_per_time.get(key).results:
+                if str(simulation_result.adjusted_junction_id) not in ['1', '2', '3', '4']:
                     continue
 
-                actual_leaking_junction_id = result.adjusted_junction_id
-                predicted_leaking_junction_id = self.detect_leak(result)
+                actual_leaking_junction_id = simulation_result.adjusted_junction_id
+                predicted_leaking_junction_id = self.detect_leak(simulation_result, session_id=self.simulation_session_result_per_time.get(key).session_id)
 
                 if actual_leaking_junction_id is not None:
                     print('ID of Actual Leaking Junction: ' + actual_leaking_junction_id)
@@ -35,20 +37,20 @@ class EdLeakDetectionV2:
 
         print(f'Correct {num_correct}/{num_total} = {num_correct / num_total * 100}%')
 
-    def detect_leak(self, result: MadaniResult) -> str:
-        guess_of_leaky_junction_id = []
+    def detect_leak(self, simulation_result: MadaniResult, session_id: str) -> str:
+        guess_of_leaking_junction_id = []
 
-        for key in self.session_result_per_time.keys():
+        for key in self.actual_session_result_per_time.keys():
             ranking: list[EdRank] = []
 
-            for result_to_compare in self.session_result_per_time.get(key).results:
-                if result_to_compare.adjusted_junction_id is None:
+            for actual_result in self.actual_session_result_per_time.get(key).results:
+                if actual_result.adjusted_junction_id is None:
                     continue
 
-                score = self.ed_util.calculate_based_on_delta_flow(result, result_to_compare)
+                score = self.ed_util.calculate_based_on_delta_flow(simulation_result, actual_result)
 
                 ranking.append(
-                    EdRank(result=result, result_to_compare=result_to_compare, score=score)
+                    EdRank(result=simulation_result, result_to_compare=actual_result, score=score)
                 )
 
             ranking.sort(key=lambda r: r.score)
@@ -67,7 +69,7 @@ class EdLeakDetectionV2:
             # )[:3]))
 
             prediction = ranking[0].result_to_compare.adjusted_junction_id
-            guess_of_leaky_junction_id.append(prediction)
+            guess_of_leaking_junction_id.append(prediction)
 
 
             time_step_mapping = {
@@ -82,12 +84,11 @@ class EdLeakDetectionV2:
 
             LeakLocalizationRepository().store(
                 LeakLocalizationRecord(
-                    actual_leaking=result.adjusted_junction_id,
-                    time_step_of_prediction=time_step_mapping.get(result.time_step),
+                    session_id=session_id,
+                    actual_leaking=simulation_result.adjusted_junction_id,
+                    time_step_of_prediction=simulation_result.time_step,
                     prediction=prediction
                 )
             )
 
-        # print('all guess of leaky junction id' + str(guess_of_leaky_junction_id))
-
-        return max(set(guess_of_leaky_junction_id), key=guess_of_leaky_junction_id.count)
+        return max(set(guess_of_leaking_junction_id), key=guess_of_leaking_junction_id.count)
