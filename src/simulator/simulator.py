@@ -1,18 +1,17 @@
 import subprocess
 from typing import TextIO
 
-from models.simulator import Simulator
+from models.epanet_constants import EpanetConstants
 from repository.simulation_delta_flow_repository import SimulationDeltaFlowRepository
-from result.madani.madani_result import MadaniResult
-from result.madani.madani_session_result import MadaniSessionResult
-from scenario_data.andalus_scenario_data import AndalusScenarioData
-from scenarios.scenario import Scenario
+from models.simulation_result import SimulationResult
+from models.simulation_session import SimulationSession
+from models.scenario_data import ScenarioData
 from utils import inp_util, out_util
 from utils.emit_util import EmitUtil
 from utils.inp_util import INP_EMITTERS_COEFFICIENT_COLUMN_INDEX
 
 
-class AndalusScenario(Scenario):
+class Simulator:
     """
     Simulate leak by setting some attributes:
     - emitter coeff. of each junction.
@@ -23,42 +22,42 @@ class AndalusScenario(Scenario):
 
     output_file: TextIO
 
-    def __init__(self, data: AndalusScenarioData):
+    def __init__(self, data: ScenarioData):
         self.__data = data
+        self.repository = SimulationDeltaFlowRepository()
 
     def __generate_inp_file(self, junction_id: int, emit: int, time_step: str):
         return inp_util.generate_custom_inp_file(
             initial_inp_file=self.__data.initial_inp_file,
             target_file_path=f'{self.__data.output_dir}temp/{time_step.replace(":", "_")}_set_junction_{junction_id}_emit_{emit}.inp',
-            customized_category=Simulator.CATEGORY_EMITTERS,
+            customized_category=EpanetConstants.CATEGORY_EMITTERS,
             customized_component_id=str(junction_id),
             customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
             custom_value=str(emit)
         )
 
-    def _on_arrange(self):
-        self.__session_result = MadaniSessionResult()
-        self.__session_result.session_id = '2022-11-19 08:30:00'
+    def run(self):
+        self._on_arrange()
+        self._on_simulate()
+        self._on_post_simulate()
 
-        # TODO: Based on request
-        self.__exporters = [
-            # MadaniMariaDbExporter(table='andalus_results'),
-            # MadaniPerTimeMariaDbExporter(),
-        ]
+    def _on_arrange(self):
+        self.__session_result = SimulationSession()
+        self.__session_result.session_id = '2022-11-19 08:30:00'
 
     def _on_simulate(self):
         for time_step in self.__data.time_steps:
             """Simulate on each time step"""
 
             # Simulate no leak
-            subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
+            subprocess.call(["java", "-cp", EpanetConstants.JAR_FILE, "org.addition.epanet.EPATool",
                              self.__data.initial_inp_file])
 
             pipes_when_no_leak = out_util.get_pipes(inp_file=self.__data.initial_inp_file, time_step=time_step)
             for p in pipes_when_no_leak:
                 p.base_flow = p.flow
 
-            result_when_no_leak = MadaniResult(
+            result_when_no_leak = SimulationResult(
                 custom_inp_file=self.__data.initial_inp_file,
                 time_step=time_step,
                 adjusted_junction_id=None,
@@ -67,7 +66,7 @@ class AndalusScenario(Scenario):
                 junctions=out_util.get_junctions(inp_file=self.__data.initial_inp_file, time_step=time_step),
                 pipes=pipes_when_no_leak
             )
-            self.__session_result.results.append(result_when_no_leak)
+            self.__session_result.cases.append(result_when_no_leak)
 
             for junction_id in self.__data.junction_ids:
                 """Simulate leak on each pipe by setting emitter coefficient"""
@@ -100,7 +99,7 @@ class AndalusScenario(Scenario):
                 )
 
                 # Simulate
-                subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
+                subprocess.call(["java", "-cp", EpanetConstants.JAR_FILE, "org.addition.epanet.EPATool",
                                  inp_file])
 
                 # Get result
@@ -113,13 +112,13 @@ class AndalusScenario(Scenario):
                             break
 
                 # Put result
-                self.__session_result.results.append(
-                    MadaniResult(
+                self.__session_result.cases.append(
+                    SimulationResult(
                         custom_inp_file=inp_file,
                         time_step=time_step,
-                        adjusted_junction_id=junction_id,
-                        adjusted_junction_emit=emit,
-                        adjusted_junction_leak=actual_leak,
+                        leaking_junction_id=junction_id,
+                        leaking_junction_emit=emit,
+                        leaking_junction_leak=actual_leak,
                         junctions=result_junctions,
                         pipes=result_pipes
                     )
@@ -129,4 +128,4 @@ class AndalusScenario(Scenario):
         # for exporter in self.__exporters:
         #     exporter.export(self.__session_result)
 
-        SimulationDeltaFlowRepository().store(self.__session_result)
+        self.repository.store(self.__session_result)

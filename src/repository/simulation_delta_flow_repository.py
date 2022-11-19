@@ -3,8 +3,8 @@ from operator import itemgetter
 
 from db_client.maria_db_client import MariaDbClient
 from models.pipe import Pipe
-from result.madani.madani_result import MadaniResult
-from result.madani.madani_session_result import MadaniSessionResult
+from models.simulation_result import SimulationResult
+from models.simulation_session import SimulationSession
 
 
 class SimulationDeltaFlowRepository:
@@ -41,7 +41,7 @@ class SimulationDeltaFlowRepository:
         self.db_client.execute(statement, [])
         self.db_client.cursor.close()
 
-    def get_simulation_cases(self, session_id: str, time_step: str) -> MadaniSessionResult:
+    def get_simulation_cases(self, session_id: str, time_step: str) -> SimulationSession:
         statement = """
             SELECT *
             FROM simulation_cases sc
@@ -60,7 +60,7 @@ class SimulationDeltaFlowRepository:
         rows = [{columns[index][0]: column for index, column in enumerate(value)} for value in results]
 
         print("Converting row to POJO...")
-        session_result = MadaniSessionResult()
+        session_result = SimulationSession()
         session_result.session_id = session_id
 
         for key, value in groupby(rows, key=itemgetter('case_id')):
@@ -82,13 +82,13 @@ class SimulationDeltaFlowRepository:
                     )
                 )
 
-            session_result.results.append(
-                MadaniResult(
+            session_result.cases.append(
+                SimulationResult(
                     custom_inp_file='',
                     time_step=time_step,
-                    adjusted_junction_id=leaking_junction_id,
-                    adjusted_junction_emit=leaking_junction_emit,
-                    adjusted_junction_leak=leaking_junction_leak,
+                    leaking_junction_id=leaking_junction_id,
+                    leaking_junction_emit=leaking_junction_emit,
+                    leaking_junction_leak=leaking_junction_leak,
                     junctions=[],
                     pipes=pipes
                 )
@@ -96,13 +96,13 @@ class SimulationDeltaFlowRepository:
 
         return session_result
 
-    def store(self, session_result: MadaniSessionResult):
-        for case in session_result.results:
+    def store(self, session_result: SimulationSession):
+        for case in session_result.cases:
             statement = """
                 INSERT INTO `simulation_cases` (session_id, time_step, leaking_junction_id, leaking_junction_emit, leaking_junction_leak) 
                 VALUES (?, ?, ?, ?, ?)
             """
-            self.db_client.execute(statement, [session_result.session_id, case.time_step, case.adjusted_junction_id, case.adjusted_junction_emit, case.adjusted_junction_leak])
+            self.db_client.execute(statement, [session_result.session_id, case.time_step, case.leaking_junction_id, case.leaking_junction_emit, case.leaking_junction_leak])
             case_id = self.db_client.cursor.lastrowid
 
             for pipe in case.pipes:

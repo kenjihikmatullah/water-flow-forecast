@@ -1,7 +1,7 @@
 import subprocess
 
 from models.emit_to_simulate_leak_result import EmitToSimulateLeakResult
-from models.simulator import Simulator
+from models.epanet_constants import EpanetConstants
 from utils import out_util, inp_util
 from utils.inp_util import INP_EMITTERS_COEFFICIENT_COLUMN_INDEX
 
@@ -30,14 +30,14 @@ class EmitUtil:
             inp_file = inp_util.generate_custom_inp_file(
                 initial_inp_file=initial_inp_file,
                 target_file_path=f'{output_dir}temp_hill_climbing/{time_step.replace(":", "_")}_set_junction_{adjusted_junction_id}_emit_{emit}.inp',
-                customized_category=Simulator.CATEGORY_EMITTERS,
+                customized_category=EpanetConstants.CATEGORY_EMITTERS,
                 customized_component_id=str(adjusted_junction_id),
                 customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
                 custom_value=str(emit)
             )
 
             # Simulate
-            subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
+            subprocess.call(["java", "-cp", EpanetConstants.JAR_FILE, "org.addition.epanet.EPATool",
                              inp_file])
 
             actual_demand_str = out_util.get_actual_demand(
@@ -86,14 +86,14 @@ class EmitUtil:
             inp_file = inp_util.generate_custom_inp_file(
                 initial_inp_file=initial_inp_file,
                 target_file_path=f'{output_dir}temp_hill_climbing/{time_step.replace(":", "_")}_set_junction_{adjusted_junction_id}_emit_{current_emit}.inp',
-                customized_category=Simulator.CATEGORY_EMITTERS,
+                customized_category=EpanetConstants.CATEGORY_EMITTERS,
                 customized_component_id=str(adjusted_junction_id),
                 customized_column_index=INP_EMITTERS_COEFFICIENT_COLUMN_INDEX,
                 custom_value=str(current_emit)
             )
 
             # Simulate
-            subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
+            subprocess.call(["java", "-cp", EpanetConstants.JAR_FILE, "org.addition.epanet.EPATool",
                              inp_file])
 
             actual_demand_str = out_util.get_actual_demand(

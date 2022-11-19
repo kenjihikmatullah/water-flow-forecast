@@ -1,7 +1,7 @@
 from models.inp_metadata import InpMetadata
 from models.junction import Junction
 from models.pipe import Pipe
-from models.simulator import Simulator
+from models.epanet_constants import EpanetConstants
 from utils.inp_metadata_creator import InpMetadataCreator
 
 
@@ -47,7 +47,7 @@ class InpMetadataCreatorImpl(InpMetadataCreator):
                 if len(columns) == 0:
                     continue
 
-                if columns[0].find(Simulator.CATEGORY_JUNCTIONS) > -1:
+                if columns[0].find(EpanetConstants.CATEGORY_JUNCTIONS) > -1:
                     in_category = True
 
         return junctions
@@ -79,7 +79,7 @@ class InpMetadataCreatorImpl(InpMetadataCreator):
                 if len(columns) == 0:
                     continue
 
-                if columns[0].find(Simulator.CATEGORY_PIPES) > -1:
+                if columns[0].find(EpanetConstants.CATEGORY_PIPES) > -1:
                     in_category = True
 
         return pipes
@@ -113,7 +113,7 @@ class InpMetadataCreatorImpl(InpMetadataCreator):
                 if len(columns) == 0:
                     continue
 
-                if columns[0].find(Simulator.CATEGORY_TIMES) > -1:
+                if columns[0].find(EpanetConstants.CATEGORY_TIMES) > -1:
                     in_category = True
 
         times: list[str] = []

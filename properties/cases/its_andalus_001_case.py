@@ -1,4 +1,4 @@
-from scenario_data.andalus_scenario_data import AndalusScenarioData
+from models.scenario_data import ScenarioData
 
 
 def get_data():
@@ -10,7 +10,7 @@ def get_data():
 
     #time-series
     """
-    return AndalusScenarioData(
+    return ScenarioData(
         initial_inp_file='input/its_weekly_dawn.inp',
         output_dir='output/weekly_dawn_andalus/'
     )

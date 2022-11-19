@@ -2,7 +2,7 @@ from exporter.csv_exporter import CsvExporter
 import os
 import shutil
 
-from result.madani.madani_session_result import MadaniSessionResult
+from models.simulation_session import SimulationSession
 from scenario_data.madani_scenario_data import MadaniScenarioData
 
 
@@ -11,7 +11,7 @@ class MadaniCsvExporter(CsvExporter):
     def __init__(self, data: MadaniScenarioData):
         self.__data = data
 
-    def export(self, session_result: MadaniSessionResult):
+    def export(self, session_result: SimulationSession):
         self.__initialize()
         self.__write_header()
         self.__write_body(session_result)
@@ -38,12 +38,12 @@ class MadaniCsvExporter(CsvExporter):
 
         self._write_row(header)
 
-    def __write_body(self, session_result: MadaniSessionResult):
-        for result in session_result.results:
+    def __write_body(self, session_result: SimulationSession):
+        for result in session_result.cases:
             row = [
                 result.time_step,
-                result.adjusted_junction_id or '',
-                str(result.adjusted_junction_emit),
+                result.leaking_junction_id or '',
+                str(result.leaking_junction_emit),
                 *map(lambda j: str(j.actual_demand), result.junctions),
                 *map(lambda j: str(j.flow), result.pipes)
             ]

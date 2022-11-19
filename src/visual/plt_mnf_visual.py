@@ -1,14 +1,14 @@
 import subprocess
 
-from models.simulator import Simulator
+from models.epanet_constants import EpanetConstants
 import matplotlib.pyplot as plt
 
-from scenario_data.andalus_scenario_data import AndalusScenarioData
+from models.scenario_data import ScenarioData
 from utils import out_util
 
 
 class PltMnfVisual:
-    def __init__(self, data: AndalusScenarioData):
+    def __init__(self, data: ScenarioData):
         self.data = data
 
     def visualize(self):
@@ -18,7 +18,7 @@ class PltMnfVisual:
             """Simulate on each time step"""
 
             # Simulate no leak
-            subprocess.call(["java", "-cp", Simulator.JAR_FILE, "org.addition.epanet.EPATool",
+            subprocess.call(["java", "-cp", EpanetConstants.JAR_FILE, "org.addition.epanet.EPATool",
                              self.data.initial_inp_file])
 
             pipes_when_no_leak = out_util.get_pipes(inp_file=self.data.initial_inp_file, time_step=time_step)

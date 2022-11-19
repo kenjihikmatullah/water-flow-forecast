@@ -1,8 +1,8 @@
 from db_client.mongo_db_client import MongoDbClient
 from models.junction import Junction
 from models.pipe import Pipe
-from result.madani.madani_result import MadaniResult
-from result.madani.madani_session_result import MadaniSessionResult
+from models.simulation_result import SimulationResult
+from models.simulation_session import SimulationSession
 
 
 class MadaniMongoDbExporter:
@@ -25,16 +25,16 @@ class MadaniMongoDbExporter:
             'flow': pipe.flow
         }
 
-    def map_result_to_dict(self, result: MadaniResult):
+    def map_result_to_dict(self, result: SimulationResult):
         return {
             'session_id': None,  # TODO: Generate dynamically
             'time_step': result.time_step,
-            'adjusted_junction_id': result.adjusted_junction_id,
-            'emit': result.adjusted_junction_emit,
+            'adjusted_junction_id': result.leaking_junction_id,
+            'emit': result.leaking_junction_emit,
             'junctions': list(map(self.map_junction_to_dict, result.junctions)),
             'pipes': list(map(self.map_pipe_to_dict, result.pipes))
         }
 
-    def export(self, session_result: MadaniSessionResult):
-        documents = list(map(self.map_result_to_dict, session_result.results))
+    def export(self, session_result: SimulationSession):
+        documents = list(map(self.map_result_to_dict, session_result.cases))
         self.db_client.insert('simulation_results', documents)
