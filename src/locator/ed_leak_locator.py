@@ -23,7 +23,7 @@ class EdLeakLocator:
         num_total = 0
 
         for key in self.simulation_session_result_per_time.keys():
-            for simulation_result in self.simulation_session_result_per_time.get(key).cases:
+            for simulation_result in self.simulation_session_result_per_time.get(key).results:
 
                 actual_leaking_junction_id = simulation_result.leaking_junction_id
                 predicted_leaking_junction_id = self.detect_leak(simulation_result,
@@ -48,7 +48,7 @@ class EdLeakLocator:
         for key in self.actual_session_result_per_time.keys():
             ranking: list[EdRank] = []
 
-            for actual_result in self.actual_session_result_per_time.get(key).cases:
+            for actual_result in self.actual_session_result_per_time.get(key).results:
                 if actual_result.leaking_junction_id is None:
                     continue
 

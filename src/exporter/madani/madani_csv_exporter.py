@@ -39,7 +39,7 @@ class MadaniCsvExporter(CsvExporter):
         self._write_row(header)
 
     def __write_body(self, session_result: SimulationSession):
-        for result in session_result.cases:
+        for result in session_result.results:
             row = [
                 result.time_step,
                 result.leaking_junction_id or '',

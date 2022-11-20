@@ -2,7 +2,7 @@ import subprocess
 from typing import TextIO
 
 from models.epanet_constants import EpanetConstants
-from repository.simulation_delta_flow_repository import SimulationDeltaFlowRepository
+from repository.simulation_result_repository import SimulationResultRepository
 from models.simulation_result import SimulationResult
 from models.simulation_session import SimulationSession
 from models.scenario_data import ScenarioData
@@ -24,7 +24,7 @@ class Simulator:
 
     def __init__(self, data: ScenarioData):
         self.__data = data
-        self.repository = SimulationDeltaFlowRepository()
+        self.repository = SimulationResultRepository()
 
     def __generate_inp_file(self, junction_id: int, emit: int, time_step: str):
         return inp_util.generate_custom_inp_file(
@@ -60,22 +60,22 @@ class Simulator:
             result_when_no_leak = SimulationResult(
                 custom_inp_file=self.__data.initial_inp_file,
                 time_step=time_step,
-                adjusted_junction_id=None,
-                adjusted_junction_emit=None,
-                adjusted_junction_leak=None,
+                leaking_junction_id=None,
+                leaking_junction_emit=None,
+                leaking_junction_leak=None,
                 junctions=out_util.get_junctions(inp_file=self.__data.initial_inp_file, time_step=time_step),
                 pipes=pipes_when_no_leak
             )
-            self.__session_result.cases.append(result_when_no_leak)
+            self.__session_result.results.append(result_when_no_leak)
 
             for junction_id in self.__data.junction_ids:
                 """Simulate leak on each pipe by setting emitter coefficient"""
 
-                if time_step == '02:00:00':
-                    break
-
-                if int(junction_id) > 4:
-                    break
+                # if time_step == '02:00:00':
+                #     break
+                #
+                # if int(junction_id) > 2:
+                #     break
 
                 junction_when_no_leak = self.__session_result.get_junction_result_when_no_leak(junction_id, '01:00:00')
                 demand_when_no_leak = junction_when_no_leak.actual_demand
@@ -112,7 +112,7 @@ class Simulator:
                             break
 
                 # Put result
-                self.__session_result.cases.append(
+                self.__session_result.results.append(
                     SimulationResult(
                         custom_inp_file=inp_file,
                         time_step=time_step,

@@ -7,7 +7,7 @@ from models.simulation_result import SimulationResult
 @dataclass
 class SimulationSession:
     session_id: str = None
-    cases: list[SimulationResult] = field(default_factory=list)
+    results: list[SimulationResult] = field(default_factory=list)
 
     # TODO: Add FK to version of real data from sensors which this simulation is based on
 
@@ -15,7 +15,7 @@ class SimulationSession:
         """
         Get actual demand of a junction at certain time step
         """
-        for result in self.cases:
+        for result in self.results:
             if result.leaking_junction_id is None and result.time_step == time_step:
                 for junction in result.junctions:
                     if junction.id == junction_id:

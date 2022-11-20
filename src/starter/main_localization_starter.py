@@ -1,6 +1,6 @@
 from locator.ed_leak_locator import EdLeakLocator
 from repository.leak_localization_repository import LeakLocalizationRepository
-from repository.simulation_delta_flow_repository import SimulationDeltaFlowRepository
+from repository.simulation_result_repository import SimulationResultRepository
 from models.simulation_session import SimulationSession
 
 if __name__ == "__main__":
@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     for i in range(1, 8):
         time = f"0{i}:00:00"
-        session_result_per_time[time] = SimulationDeltaFlowRepository().get_simulation_cases(session_id='2022-11-19 08:30:00', time_step=time)
+        session_result_per_time[time] = SimulationResultRepository().get_simulation_cases(session_id='2022-11-19 08:30:00', time_step=time)
 
     EdLeakLocator(
         simulation_session_result_per_time=session_result_per_time,

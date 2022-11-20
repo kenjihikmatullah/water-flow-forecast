@@ -36,5 +36,5 @@ class MadaniMongoDbExporter:
         }
 
     def export(self, session_result: SimulationSession):
-        documents = list(map(self.map_result_to_dict, session_result.cases))
+        documents = list(map(self.map_result_to_dict, session_result.results))
         self.db_client.insert('simulation_results', documents)

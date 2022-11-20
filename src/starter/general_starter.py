@@ -1,4 +1,4 @@
-from repository.simulation_delta_flow_repository import SimulationDeltaFlowRepository
+from repository.simulation_result_repository import SimulationResultRepository
 
 if __name__ == "__main__":
-    SimulationDeltaFlowRepository().get_simulation_cases('2022-11-19 07:00:00')
+    SimulationResultRepository().get_simulation_results('2022-11-19 07:00:00')

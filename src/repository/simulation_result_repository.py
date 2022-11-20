@@ -7,14 +7,14 @@ from models.simulation_result import SimulationResult
 from models.simulation_session import SimulationSession
 
 
-class SimulationDeltaFlowRepository:
+class SimulationResultRepository:
 
     def __init__(self):
         self.db_client = MariaDbClient()
 
     def create_cases_table(self):
         statement = """
-            CREATE TABLE `simulation_cases` (
+            CREATE TABLE `simulation_results` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `session_id` VARCHAR(32) NOT NULL,
                 `time_step` VARCHAR(32) NOT NULL,
@@ -30,25 +30,26 @@ class SimulationDeltaFlowRepository:
 
     def create_delta_flow_table(self):
         statement = """
-            CREATE TABLE `simulation_delta_flow` (
-                `case_id` INT UNSIGNED NOT NULL,
+            CREATE TABLE `simulation_pipe_flow` (
+                `result_id` INT UNSIGNED NOT NULL,
                 `pipe_id` VARCHAR(32) NOT NULL,
+                `pipe_flow` FLOAT NOT NULL,
                 `pipe_delta_flow` FLOAT NOT NULL,
                 
-                FOREIGN KEY (case_id) REFERENCES simulation_cases(id)
+                FOREIGN KEY (result_id) REFERENCES simulation_results(id)
             )
         """
         self.db_client.execute(statement, [])
         self.db_client.cursor.close()
 
-    def get_simulation_cases(self, session_id: str, time_step: str) -> SimulationSession:
+    def get_simulation_results(self, session_id: str, time_step: str) -> SimulationSession:
         statement = """
             SELECT *
-            FROM simulation_cases sc
-            JOIN simulation_delta_flow sdf ON sdf.case_id = sc.id
-            WHERE sc.session_id = ?
-            AND sc.time_step = ?
-            ORDER BY case_id, CAST(pipe_id AS UNSIGNED)
+            FROM simulation_results sr
+            JOIN simulation_pipe_flow spf ON spf.result_id = sr.id
+            WHERE sr.session_id = ?
+            AND sr.time_step = ?
+            ORDER BY result_id, CAST(pipe_id AS UNSIGNED)
         """
 
         self.db_client.execute(statement, [session_id, time_step])
@@ -63,7 +64,7 @@ class SimulationDeltaFlowRepository:
         session_result = SimulationSession()
         session_result.session_id = session_id
 
-        for key, value in groupby(rows, key=itemgetter('case_id')):
+        for key, value in groupby(rows, key=itemgetter('result_id')):
             pipes: list[Pipe] = []
 
             values = list(value)
@@ -78,11 +79,12 @@ class SimulationDeltaFlowRepository:
                 pipes.append(
                     Pipe(
                         id=df_row['pipe_id'],
+                        flow=df_row['pipe_flow'],
                         delta_flow=df_row['pipe_delta_flow']
                     )
                 )
 
-            session_result.cases.append(
+            session_result.results.append(
                 SimulationResult(
                     custom_inp_file='',
                     time_step=time_step,
@@ -97,16 +99,16 @@ class SimulationDeltaFlowRepository:
         return session_result
 
     def store(self, session_result: SimulationSession):
-        for case in session_result.cases:
+        for case in session_result.results:
             statement = """
-                INSERT INTO `simulation_cases` (session_id, time_step, leaking_junction_id, leaking_junction_emit, leaking_junction_leak) 
+                INSERT INTO `simulation_results` (session_id, time_step, leaking_junction_id, leaking_junction_emit, leaking_junction_leak) 
                 VALUES (?, ?, ?, ?, ?)
             """
             self.db_client.execute(statement, [session_result.session_id, case.time_step, case.leaking_junction_id, case.leaking_junction_emit, case.leaking_junction_leak])
-            case_id = self.db_client.cursor.lastrowid
+            result_id = self.db_client.cursor.lastrowid
 
             for pipe in case.pipes:
                 statement_df = """
-                    INSERT INTO `simulation_delta_flow` (case_id, pipe_id, pipe_delta_flow) VALUES (?, ?, ?)
+                    INSERT INTO `simulation_pipe_flow` (result_id, pipe_id, pipe_flow, pipe_delta_flow) VALUES (?, ?, ?, ?)
                 """
-                self.db_client.execute(statement_df, [case_id, pipe.id, pipe.get_delta_flow()])
+                self.db_client.execute(statement_df, [result_id, pipe.id, pipe.flow, pipe.get_delta_flow()])
