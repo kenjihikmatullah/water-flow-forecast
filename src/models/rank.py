@@ -3,11 +3,11 @@ import json
 from models.simulation_result import SimulationResult
 
 
-class EdRank:
+class Rank:
 
-    def __init__(self, simulation_case: SimulationResult, actual_case: SimulationResult, score: float):
-        self.simulation_case = simulation_case
-        self.actual_case = actual_case
+    def __init__(self, actual_result: SimulationResult, simulation_result: SimulationResult, score: float):
+        self.actual_result = actual_result
+        self.simulation_result = simulation_result
         self.score = score
 
     def to_json(self):

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from properties.cases import its_andalus_001_case
+from visual.hasil_simulasi_1 import HasilSimulasi1
 from visual.plt_mnf_visual import PltMnfVisual
 
 if __name__ == "__main__":
@@ -12,5 +13,7 @@ if __name__ == "__main__":
     root_dir = Path(current_dir).parents[2]
     os.chdir(root_dir)
 
-    data = its_andalus_001_case.get_data()
-    PltMnfVisual(data).visualize()
+    # data = its_andalus_001_case.get_data()
+    # PltMnfVisual(data).visualize()
+
+    HasilSimulasi1().visualize()

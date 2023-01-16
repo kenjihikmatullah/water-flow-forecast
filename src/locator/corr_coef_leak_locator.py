@@ -1,14 +1,14 @@
-from models.rank import Rank
 from models.leak_localization_record import LeakLocalizationRecord
-from repository.leak_localization_repository import LeakLocalizationRepository
+from models.rank import Rank
 from models.simulation_result import SimulationResult
 from models.simulation_session import SimulationSession
-from utils.euclidean_distance_util import EuclideanDistanceUtil
+from repository.leak_localization_repository import LeakLocalizationRepository
+from utils.corr_coef_util import CorrCoefUtil
 
 
-class EdLeakLocator:
+class CorrCoefLeakLocator:
     """
-    Locate leakage using euclidean distance formula
+    Locate leakage using correlation coefficient formula
     """
 
     def __init__(
@@ -21,20 +21,21 @@ class EdLeakLocator:
         self.simulation_session_result_per_time = simulation_session_result_per_time
         self.localization_session_id = localization_session_id
 
-        self.ed_util = EuclideanDistanceUtil()
+        self.corr_coeff_util = CorrCoefUtil()
         self.repository = LeakLocalizationRepository()
 
     def execute(self):
         num_correct = 0
         num_total = 0
 
+        # Iterate through all actual leak cases
         for key in self.actual_session_result_per_time.keys():
             actual_results = self.actual_session_result_per_time.get(key).results
             for actual_result in actual_results:
                 actual_leaking_junction_id = actual_result.leaking_junction_id
                 predicted_leaking_junction_id = self.locate(actual_result,
                                                             simulation_session_id=self.simulation_session_result_per_time.get(
-                                                                     key).session_id)
+                                                                key).session_id)
 
                 if actual_leaking_junction_id is not None:
                     print('ID of Actual Leaking Junction: ' + actual_leaking_junction_id)
@@ -52,6 +53,7 @@ class EdLeakLocator:
         """
         prediction_of_leaking_junction_id = []
 
+        # Get prediction on each DB time step
         for key in self.simulation_session_result_per_time.keys():
             ranking: list[Rank] = []
 
@@ -60,14 +62,20 @@ class EdLeakLocator:
                 if simulation_result.leaking_junction_id is None:
                     continue
 
-                score = self.ed_util.calculate_based_on_delta_flow(actual_result=actual_result,
-                                                                   simulation_result=simulation_result)
-
-                ranking.append(
-                    Rank(actual_result=actual_result, simulation_result=simulation_result, score=score)
+                corr_coeff = self.corr_coeff_util.calculate(
+                    actual_result=actual_result,
+                    simulation_result=simulation_result
                 )
 
-            ranking.sort(key=lambda r: r.score)
+                ranking.append(
+                    Rank(actual_result=actual_result, simulation_result=simulation_result, score=corr_coeff)
+                )
+
+            """
+            In correlation coefficient formula,
+            the larger the coefficient value, the more similar
+            """
+            ranking.sort(key=lambda r: r.score, reverse=True)
 
             if len(ranking) == 0:
                 return ''
@@ -92,7 +100,7 @@ class EdLeakLocator:
                 actual_leaking=actual_result.leaking_junction_id,
                 time_step_of_prediction=time_step_mapping.get(prediction.time_step),
                 prediction=prediction.leaking_junction_id,
-                method='EUCLIDEAN_DISTANCE'
+                method='CORRELATION_COEFFICIENT'
             )
 
             self.repository.store(record)

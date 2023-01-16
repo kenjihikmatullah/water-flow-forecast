@@ -1,4 +1,4 @@
-from repository.simulation_result_repository import SimulationResultRepository
+from utils.corr_coef_util import CorrCoefUtil
 
 if __name__ == "__main__":
-    SimulationResultRepository().get_simulation_results('2022-11-19 07:00:00')
+    CorrCoefUtil().calculate()

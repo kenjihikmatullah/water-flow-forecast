@@ -22,3 +22,23 @@ class SimulationSession:
                         return junction
 
         return None
+
+    @property
+    def junction_ids(self) -> list[str]:
+        junctions = []
+
+        if len(self.results) > 0:
+            junctions = self.results[0].junctions
+            junctions.sort(key=lambda j : int(j.id))
+
+        return list(map(lambda j: j.id, junctions))
+
+    @property
+    def pipe_ids(self) -> list[str]:
+        pipes = []
+
+        if len(self.results) > 0:
+            pipes = self.results[0].pipes
+            pipes.sort(key=lambda p : int(p.id))
+
+        return list(map(lambda p: p.id, pipes))

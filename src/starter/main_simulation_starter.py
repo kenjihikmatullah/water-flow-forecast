@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from properties.cases import its_andalus_001_case
+from repository.simulation_result_repository import SimulationResultRepository
 from simulator.simulator import Simulator
 
 

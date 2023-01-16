@@ -1,3 +1,5 @@
+import csv
+
 from itertools import groupby
 from operator import itemgetter
 
@@ -84,6 +86,8 @@ class SimulationResultRepository:
                     )
                 )
 
+            pipes.sort(key=lambda p: int(p.id))
+
             session_result.results.append(
                 SimulationResult(
                     custom_inp_file='',
@@ -97,6 +101,38 @@ class SimulationResultRepository:
             )
 
         return session_result
+
+    def convert_result_from_db_to_csv(self, session_id: str, time_step: str, filename: str):
+        session = self.get_simulation_results(
+            session_id=session_id,
+            time_step=time_step
+        )
+
+        fp = open(filename, 'w')
+        file = csv.writer(fp, lineterminator='\n')
+
+        header: list[str] = ['time_step', 'leaking_junction_id', 'leaking_junction_leak','emit']
+
+        # for junction_id in session.junction_ids:
+        #     header.append(f'j{junction_id}_actual_demand')
+
+        for pipe_id in session.pipe_ids:
+            header.append(f'p{pipe_id}_delta_flow')
+
+        file.writerow(header)
+
+        for result in session.results:
+            row = [
+                result.time_step,
+                result.leaking_junction_id or '',
+                str(result.leaking_junction_leak) or '',
+                str(result.leaking_junction_emit),
+                # *map(lambda j: str(j.actual_demand), result.junctions),
+                *map(lambda p: str(p.delta_flow), result.pipes)
+            ]
+            file.writerow(row)
+
+        fp.close()
 
     def store(self, session_result: SimulationSession):
         for case in session_result.results:
